@@ -42,7 +42,7 @@ export default class Plugin implements OmeggaPlugin<Config, Storage> {
     this.omegga.on('cmd:pos', async () => {
       this.omegga.broadcast('Player positions:');
       const playerPositions = await Omegga.getAllPlayerPositions();
-      playerPositions.forEach((pos) => {
+      playerPositions.forEach(pos => {
         this.omegga.broadcast(` * ${pos.player.name}  - ${pos.pos}`);
       });
     });

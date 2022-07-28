@@ -1,1 +1,19 @@
-{}
+{
+    "name": "unlimited-mining",
+    "version": "0.1.0",
+    "description": "A Brickadia gamemode that lets players mine infinitely.",
+    "main": "omegga.plugin.js",
+    "scripts": {
+        "lint": "npx prettier --check .",
+        "lint:fix": "npx prettier --write ."
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jcbrockschmidt/omegga-unlimited-mining.git"
+    },
+    "author": "Jaclyn Brockschmidt",
+    "license": "ISC",
+    "devDependencies": {
+        "prettier": "2.7.1"
+    }
+}
