@@ -10,8 +10,7 @@ const MINABLE_BRICK_SIZE: Vector = [10, 10, 10];
 
 const MINABLE_BRICK_MSG: string = 'um:brick';
 
-// TODO: make starting location more dynamic
-const STARTING_Z: number = 100;
+const MINE_ORIGIN: Vector = [153, -13, 341];
 
 const DEFAULT_SAVE_DATA: WriteSaveObject = {
     brick_owners: [
@@ -142,7 +141,7 @@ async function mineBrick(position: Vector, {obscuredFaces, type}: IMinableBrick)
             CubeFace.PosZ,
             CubeFace.NegZ,
         ].forEach((checkFace) => {
-            if ((checkFace === faceCreatedFrom) || (checkFace === CubeFace.PosZ && newPos[2] >= STARTING_Z))
+            if ((checkFace === faceCreatedFrom) || (checkFace === CubeFace.PosZ && newPos[2] >= MINE_ORIGIN[2]))
                 return;
 
             const checkOffset = CUBE_FACE_TO_OFFSET[checkFace];
@@ -235,9 +234,14 @@ export async function initMiningArea(width: number, length: number): Promise<voi
             else if (y === length - 1)
                 obscuredFaces.add(CubeFace.PosY);
 
+            const brickPosition: Vector = [
+                MINE_ORIGIN[0] + MINABLE_BRICK_SIZE[0] * 2 * x,
+                MINE_ORIGIN[1] + MINABLE_BRICK_SIZE[1] * 2 * y,
+                MINE_ORIGIN[2],
+            ];
             brickPromises.push(
                 createMinableBrick(
-                    [MINABLE_BRICK_SIZE[0] * 2 * x, MINABLE_BRICK_SIZE[1] * 2 * y, STARTING_Z],
+                    brickPosition,
                     DirtResource,
                     obscuredFaces,
                 ),
