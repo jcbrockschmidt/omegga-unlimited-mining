@@ -1,15 +1,16 @@
 import OmeggaPlugin, { Brick, Vector, WriteSaveObject } from '../omegga';
 import { IResourceBrick, DirtResource } from './resources';
 
-// TODO: use 20x Micro-Brick Cube because it looks better
-// const MINABLE_BRICK_TYPE: string = '2x Cube';
-// const MINABLE_BRICK_ASSET: string = 'PB_DefaultBrick';
-const MINABLE_BRICK_TYPE: string = '20x Micro-Brick Cube';
-const MINABLE_BRICK_ASSET: string = 'PB_DefaultMicroBrick';
+// Brick properties shared by all minable bricks.
+const MINABLE_BRICK_TYPE = '20x Micro-Brick Cube';
+const MINABLE_BRICK_ASSET = 'PB_DefaultMicroBrick';
 const MINABLE_BRICK_SIZE: Vector = [10, 10, 10];
 
-const MINABLE_BRICK_MSG: string = 'um:brick';
+// Message used to detect player interactions with minable bricks.
+const MINABLE_BRICK_MSG = 'um:brick';
 
+// Real position of (0, 0, 0) for the minable brick coordinate system.
+// This is where the generation of minable bricks starts.
 const MINE_ORIGIN: Vector = [153, -13, 341];
 
 const DEFAULT_SAVE_DATA: WriteSaveObject = {
@@ -124,7 +125,7 @@ async function mineBrick(
 ): Promise<void> {
   // Reveal new bricks on obscured faces.
   const newBrickPromises = [...obscuredFaces].map((face: CubeFace) => {
-    let offset = CUBE_FACE_TO_OFFSET[face];
+    const offset = CUBE_FACE_TO_OFFSET[face];
     // TODO: library for vector math?
     const newPos: Vector = [
       position[0] + offset[0],
@@ -190,22 +191,20 @@ async function hitBrick(playerId: string, position: Vector): Promise<void> {
   }
   const { color, displayName } = brickData.type;
 
-  // Reduce HP
+  // Reduce HP.
   // TODO: get player pick level
   brickData.hp--;
 
   const name = displayName.toUpperCase();
   const hexColor = rgbToHex(color);
-  if (brickData.hp > 0) {
-    Omegga.middlePrint(
-      playerId,
-      `<size="30"><color="${hexColor}">${name}</></><br><b><size="40">${brickData.hp}<\>`
-    );
-  } else {
-    Omegga.middlePrint(
-      playerId,
-      `<size="30"><color="${hexColor}">${name}</></><br><b><size="40">MINED<\>`
-    );
+  const displayHp: string =
+    brickData.hp > 0 ? brickData.hp.toString() : 'MINED';
+  const msg =
+    `<size="30"><color="${hexColor}">${name}</></>` +
+    '<br>' +
+    `<b><size="40">${displayHp}</>`;
+  Omegga.middlePrint(playerId, msg);
+  if (brickData.hp <= 0) {
     await mineBrick(position, brickData);
   }
 }
@@ -217,9 +216,8 @@ export function initMiningMechanics(plugin: OmeggaPlugin<any, any>) {
       if (message !== MINABLE_BRICK_MSG || brick_name !== MINABLE_BRICK_TYPE)
         return;
 
-      await hitBrick(player.id, position);
-
       try {
+        await hitBrick(player.id, position);
       } catch (e) {
         console.log(e);
       }

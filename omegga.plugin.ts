@@ -1,19 +1,19 @@
-import OmeggaPlugin, { Brick, OL, PS, PC, Vector } from 'omegga';
+import { OL, PS, PC } from 'omegga';
 
-import { initMiningArea, initMiningMechanics } from './src';
+import {
+  initMiningArea,
+  initMiningMechanics,
+  UMConfig,
+  UMPlugin,
+  UMStorage,
+} from './src';
 
-// TODO: do something with these
-type Config = { foo: string };
-type Storage = { bar: string };
-
-// TODO: refactor
-
-export default class Plugin implements OmeggaPlugin<Config, Storage> {
+export default class Plugin implements UMPlugin {
   omegga: OL;
-  config: PC<Config>;
-  store: PS<Storage>;
+  config: PC<UMConfig>;
+  store: PS<UMStorage>;
 
-  constructor(omegga: OL, config: PC<Config>, store: PS<Storage>) {
+  constructor(omegga: OL, config: PC<UMConfig>, store: PS<UMStorage>) {
     this.omegga = omegga;
     this.config = config;
     this.store = store;
