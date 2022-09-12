@@ -22,39 +22,44 @@ export default class Plugin implements UMPlugin {
   async init() {
     // TODO: delete world plate
 
-    this.omegga.on('cmd:test', async () => {
-      this.omegga.broadcast('Creating mining area...');
-      try {
-        await this.mine.createMine();
-      } catch (e) {
-        console.log(e);
-      }
-    });
-
-    this.omegga.on('cmd:ResetMine', async () => {
-      this.omegga.broadcast('Resetting mining area...');
-      try {
-        await this.mine.clearMine();
-        await this.mine.createMine();
-      } catch (e) {
-        console.log(e);
-      }
-    });
-
-    // DEBUG
-    this.omegga.on('cmd:pos', async () => {
-      this.omegga.broadcast('Player positions:');
-      const playerPositions = await Omegga.getAllPlayerPositions();
-      playerPositions.forEach(pos => {
-        this.omegga.broadcast(` * ${pos.player.name}  - ${pos.pos}`);
+    this.omegga
+      .on('cmd:initmine', async () => {
+        this.omegga.broadcast('Creating mining area...');
+        try {
+          await this.mine.createMine();
+        } catch (e) {
+          console.log(e);
+        }
+      })
+      .on('cmd:clearmine', async () => {
+        this.omegga.broadcast('Clearing mining area...');
+        try {
+          await this.mine.clearMine();
+        } catch (e) {
+          console.log(e);
+        }
+      })
+      .on('cmd:resetmine', async () => {
+        this.omegga.broadcast('Resetting mining area...');
+        try {
+          await this.mine.clearMine();
+          await this.mine.createMine();
+        } catch (e) {
+          console.log(e);
+        }
       });
-    });
 
-    return { registeredCommands: ['test', 'ResetMine'] };
+    return { registeredCommands: ['initmine', 'clearmine', 'resetmine'] };
   }
 
   async stop() {
-    await this.mine.clearMine();/res
+    await this.mine.clearMine();
     // TODO: save player data
+
+    // TODO: Why does this fail?
+    this.omegga
+      .removeAllListeners('cmd:initmine')
+      .removeAllListeners('cmd:clearmine')
+      .removeAllListeners('cmd:resetmine');
   }
 }

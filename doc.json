@@ -3,5 +3,18 @@
   "description": "Mine forever.",
   "author": "SadBlobfish",
   "config": {},
-  "commands": []
+  "commands": [
+    {
+      "name": "/InitMine",
+      "description": "Initializes the mining area",
+      "example": "/InitMine",
+      "args": []
+    },
+    {
+      "name": "/ResetMine",
+      "description": "Resets the mining area",
+      "example": "/ResetMine",
+      "args": []
+    }
+  ]
 }
