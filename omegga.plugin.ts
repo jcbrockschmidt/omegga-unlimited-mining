@@ -1,5 +1,12 @@
 import { OL, PS, PC, Vector } from 'omegga';
-import { IMine, Mine, UMConfig, UMPlugin, UMStorage } from './src';
+import {
+  IMine,
+  Mine,
+  PlayerDataManager,
+  UMConfig,
+  UMPlugin,
+  UMStorage,
+} from './src';
 
 const MINE_ORIGIN: Vector = [153, -13, 341];
 const MINE_WIDTH = 10;
@@ -23,6 +30,13 @@ export default class Plugin implements UMPlugin {
     // TODO: delete world plate
 
     this.omegga
+      .on('leave', async ({ id }) => {
+        try {
+          await PlayerDataManager.savePlayerData(this.store, id);
+        } catch (e) {
+          console.log(e);
+        }
+      })
       .on('cmd:initmine', async () => {
         this.omegga.broadcast('Creating mining area...');
         try {
@@ -53,13 +67,14 @@ export default class Plugin implements UMPlugin {
   }
 
   async stop() {
-    await this.mine.clearMine();
-    // TODO: save player data
+    await PlayerDataManager.saveAllPlayerData();
 
-    // TODO: Why does this fail?
     this.omegga
       .removeAllListeners('cmd:initmine')
       .removeAllListeners('cmd:clearmine')
       .removeAllListeners('cmd:resetmine');
+
+    // TODO: Why does this fail?
+    // await this.mine.clearMine();
   }
 }
