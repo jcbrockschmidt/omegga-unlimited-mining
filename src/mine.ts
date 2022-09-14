@@ -123,12 +123,12 @@ export class Mine implements IMine {
           this.realOrigin[1] + brickSize[1] * 2 * y,
           this.realOrigin[2],
         ];
+        // TODO: Replace this with a proper world generator
+        const resource = [DirtResource, StoneResource, QuartzResource][
+          Math.floor(Math.random() * 3)
+        ];
         createVoxelPromises.push(
-          this.voxelManager.createVoxel(
-            voxelPosition,
-            DirtResource,
-            obscuredFaces
-          )
+          this.voxelManager.createVoxel(voxelPosition, resource, obscuredFaces)
         );
       }
     }
@@ -166,8 +166,7 @@ export class Mine implements IMine {
 
     if (voxelData.hp >= 0) {
       // Reduce HP.
-      // TODO: get power from player/miner
-      voxelData.hp -= 1;
+      voxelData.hp -= playerData.getPickaxePower();
 
       playerData.displayMiningMessage(voxelData);
 

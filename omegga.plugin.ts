@@ -108,6 +108,16 @@ export default class Plugin implements UMPlugin {
     }
   }
 
+  async onCmdUpgradePick(playerName: string) {
+    try {
+      const player = this.omegga.getPlayer(playerName);
+      const playerData = await PlayerDataManager.getPlayerData(this, player.id);
+      playerData.tryUpgradePick();
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   async init() {
     // TODO: delete world plate
 
@@ -119,7 +129,8 @@ export default class Plugin implements UMPlugin {
       .on('cmd:inventory', this.onCmdInventory.bind(this))
       .on('cmd:inv', this.onCmdInventory.bind(this))
       .on('cmd:stats', this.onCmdStats.bind(this))
-      .on('cmd:sellall', this.onCmdSellAll.bind(this));
+      .on('cmd:sellall', this.onCmdSellAll.bind(this))
+      .on('cmd:upgradepick', this.onCmdUpgradePick.bind(this));
 
     return {
       registeredCommands: [
@@ -130,6 +141,7 @@ export default class Plugin implements UMPlugin {
         'inv',
         'stats',
         'sellall',
+        'upgradepick',
       ],
     };
   }
@@ -144,7 +156,8 @@ export default class Plugin implements UMPlugin {
       .removeAllListeners('cmd:inventory')
       .removeAllListeners('cmd:inv')
       .removeAllListeners('cmd:stats')
-      .removeAllListeners('cmd:sellall');
+      .removeAllListeners('cmd:sellall')
+      .removeAllListeners('cmd:upgradepick');
 
     if (this.mine.isCreated()) {
       await this.mine.clearMine();

@@ -1,3 +1,4 @@
+import { IPickaxe, Pickaxe } from './pickaxe';
 import { getInvSellPrice, getResourceSellPrice } from './pricing';
 import {
   IVoxelInventory,
@@ -23,6 +24,8 @@ export interface IPlayerData {
   displayStats(): void;
   addResource(voxelType: IVoxelType, amount: number): void;
   sellAll(): void;
+  tryUpgradePick(): boolean;
+  getPickaxePower(): number;
 }
 
 interface IPlayerDataAdapter extends IPlayerData {
@@ -37,15 +40,14 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
   private plugin: UMPlugin;
   private playerId: string;
   private money: number;
-  private pickLevel: number;
+  private pickaxe: IPickaxe;
   private resources: IVoxelInventory;
-  private totalMined: number;
 
   constructor(plugin: UMPlugin, playerId: string) {
     this.plugin = plugin;
     this.playerId = playerId;
     this.money = 0;
-    this.pickLevel = 1;
+    this.pickaxe = new Pickaxe();
     this.resources = new VoxelInventory();
   }
 
@@ -61,7 +63,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
     const savedData: IPlayerDataDb = await this.plugin.store.get(
       this.getStoreId()
     );
-    this.pickLevel = savedData.pickLevel;
+    this.pickaxe = new Pickaxe(savedData.pickLevel);
     this.money = savedData.money;
     this.resources = new VoxelInventory(savedData.resources);
   }
@@ -69,7 +71,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
   async save(): Promise<void> {
     const dbData: IPlayerDataDb = {
       money: this.money,
-      pickLevel: this.pickLevel,
+      pickLevel: this.pickaxe.getLevel(),
       resources: this.resources.toDb(),
     };
 
@@ -131,10 +133,12 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
 
   displayStats(): void {
     const player = this.plugin.omegga.getPlayer(this.playerId);
+    const pickLevel = this.pickaxe.getLevel();
+    const pickUpgradeCost = this.pickaxe.getUpgradeCost().toFixed(2);
     const formattedMoney = this.money.toFixed(2);
     const msgLines: string[] = [
       `<size="20"><b><u>${player.name}'s Stats:</></></>`,
-      `<color="ffff00"><i>Pick Level:</></> ${this.pickLevel}`,
+      `<color="ffff00"><i>Pick Level:</></> ${pickLevel} (next for <color="00ff00">$</>${pickUpgradeCost})`,
       `<color="ffff00"><i>Money:</></> <color="00ff00">$</>${formattedMoney}`,
     ];
     this.plugin.omegga.whisper(this.playerId, ...msgLines);
@@ -146,7 +150,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
 
   sellAll(): void {
     if (this.resources.isEmpty()) {
-      this.plugin.omegga.whisper(this.playerId, 'Nothing to sell');
+      this.plugin.omegga.whisper(this.playerId, 'Nothing to sell.');
       return;
     }
     const sellValue = getInvSellPrice(this.resources);
@@ -155,8 +159,37 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
     const formattedValue = sellValue.toFixed(2);
     this.plugin.omegga.whisper(
       this.playerId,
-      `Sold all for <color="00ff00">$</>${formattedValue}`
+      `Sold all for <color="00ff00">$</>${formattedValue}.`
     );
+  }
+
+  tryUpgradePick(): boolean {
+    const upgradeCost = this.pickaxe.getUpgradeCost();
+    if (upgradeCost > this.money) {
+      const formattedDiff = (upgradeCost - this.money).toFixed(2);
+      this.plugin.omegga.whisper(
+        this.playerId,
+        `Cannot upgrade pickaxe. You need <color="00ff00">$</>${formattedDiff} more.`
+      );
+      return;
+    }
+    const formattedCost = upgradeCost.toFixed(2);
+    const newLevel = this.pickaxe.upgrade();
+    this.plugin.omegga.whisper(
+      this.playerId,
+      `Upgraded pickaxe to level <color="ffff00"><b>${newLevel}</></> for <color="00ff00">$</>${formattedCost}.`
+    );
+    this.plugin.omegga.middlePrint(
+      this.playerId,
+      `<size="30">PICKAXE LEVEL</><br><b><size="40">《 <color="ffff00">${newLevel}</> 》</>`
+    );
+    // TODO: can we play a sound effect?
+    // TODO: announce to server? maybe only at milestones like first upgrade and every 10
+    this.money -= upgradeCost;
+  }
+
+  getPickaxePower(): number {
+    return this.pickaxe.getPower();
   }
 }
 

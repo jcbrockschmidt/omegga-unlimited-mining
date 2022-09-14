@@ -11,14 +11,14 @@ export const DirtResource: IVoxelType = {
   name: 'Dirt',
   dbName: 'dirt',
   color: [51, 45, 26],
-  hp: 5,
+  hp: 2,
 };
 
 export const StoneResource: IVoxelType = {
   name: 'Stone',
   dbName: 'stone',
   color: [145, 142, 133],
-  hp: 10,
+  hp: 5,
 };
 
 export const QuartzResource: IVoxelType = {
