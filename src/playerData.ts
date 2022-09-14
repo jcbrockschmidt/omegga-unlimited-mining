@@ -101,35 +101,38 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
 
   displayInventory(): void {
     const player = this.plugin.omegga.getPlayer(this.playerId);
-
-    const invEntries = this.resources.getAll();
-    // Sort inventory by resource display name.
-    invEntries.sort(
-      ([type1]: [IVoxelType, number], [type2]: [IVoxelType, number]) =>
-        type1.name.localeCompare(type2.name)
-    );
     const msgLines: string[] = [
       `<size="20"><b><u>${player.name}'s Inventory:</></></>`,
     ];
-    let total = 0;
-    let totalSellValue = 0;
-    for (const [type, amount] of invEntries) {
-      const hexColor = rgbToHex(type.color);
-      const sellValue = getResourceSellPrice(type) * amount;
-      totalSellValue += sellValue;
-      msgLines.push(
-        `> <color="${hexColor}"><i>${type.name}</></>` +
-          ` - ${amount}` +
-          ` - <color="00ff00">$</>${sellValue.toFixed(2)}`
+    if (this.resources.isEmpty()) {
+      msgLines.push('<i>Empty</>')
+    } else {
+      const invEntries = this.resources.getAll();
+      // Sort inventory by resource display name.
+      invEntries.sort(
+        ([type1]: [IVoxelType, number], [type2]: [IVoxelType, number]) =>
+          type1.name.localeCompare(type2.name)
       );
-      total += amount as number;
+      let total = 0;
+      let totalSellValue = 0;
+      for (const [type, amount] of invEntries) {
+        const hexColor = rgbToHex(type.color);
+        const sellValue = getResourceSellPrice(type) * amount;
+        totalSellValue += sellValue;
+        msgLines.push(
+          `> <color="${hexColor}"><i>${type.name}</></>` +
+            ` - ${amount}` +
+            ` - <color="00ff00">$</>${sellValue.toFixed(2)}`
+        );
+        total += amount as number;
+      }
+      msgLines.push('_______________');
+      msgLines.push(
+        `<color="ffff00"><i>Total</></>` +
+          ` - ${total}` +
+          ` - <color="00ff00">$</>${totalSellValue.toFixed(2)}`
+      );
     }
-    msgLines.push('_______________');
-    msgLines.push(
-      `<color="ffff00"><i>Total</></>` +
-        ` - ${total}` +
-        ` - <color="00ff00">$</>${totalSellValue.toFixed(2)}`
-    );
     this.plugin.omegga.whisper(this.playerId, ...msgLines);
   }
 
