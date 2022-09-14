@@ -21,6 +21,12 @@
       "description": "Resets the mine",
       "example": "/ResetMine",
       "args": []
+    },
+    {
+      "name": "/Inv",
+      "description": "Displays your inventory",
+      "example": "/Inv",
+      "args": []
     }
   ]
 }

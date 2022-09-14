@@ -32,7 +32,7 @@ export default class Plugin implements UMPlugin {
     this.omegga
       .on('leave', async ({ id }) => {
         try {
-          await PlayerDataManager.savePlayerData(this.store, id);
+          await PlayerDataManager.savePlayerData(this, id);
         } catch (e) {
           console.log(e);
         }
@@ -73,6 +73,18 @@ export default class Plugin implements UMPlugin {
           await this.mine.clearMine();
           await this.mine.createMine();
           this.omegga.broadcast('Mine reset');
+        } catch (e) {
+          console.log(e);
+        }
+      })
+      .on('cmd:inv', async (playerName: string) => {
+        try {
+          const player = this.omegga.getPlayer(playerName);
+          const playerData = await PlayerDataManager.getPlayerData(
+            this,
+            player.id
+          );
+          playerData.displayInventory();
         } catch (e) {
           console.log(e);
         }

@@ -1,10 +1,14 @@
+import { PlayerDataManager } from './playerData';
 import { BrickInteraction, Vector } from '../omegga';
-import { DirtResource, BorderResource } from './resources';
+import {
+  DirtResource,
+  BorderResource,
+  StoneResource,
+  QuartzResource,
+} from './resources';
 import { UMPlugin } from './types';
 import { IVoxel, VoxelFace, IVoxelConfig } from './voxel';
 import { VoxelManager } from './voxelManager';
-
-const { rgbToHex } = OMEGGA_UTIL.color;
 
 // TODO: pass into class via constructor
 const DEFAULT_VOXEL_CONFIG: IVoxelConfig = {
@@ -12,8 +16,6 @@ const DEFAULT_VOXEL_CONFIG: IVoxelConfig = {
   brickAsset: 'PB_DefaultMicroBrick',
   brickSize: [10, 10, 10],
 };
-
-const BORDER_MESSAGE = `<size="30">BORDER</><br><b><size="40">CANNOT MINE</>`;
 
 const VOXEL_FACE_TO_INVERT: Record<VoxelFace, VoxelFace> = {
   [VoxelFace.PosX]: VoxelFace.NegX,
@@ -28,9 +30,6 @@ const VOXEL_FACE_TO_INVERT: Record<VoxelFace, VoxelFace> = {
  * Handles blocks generation and mining for a mine.
  */
 export interface IMine {
-  // TODO: Some of these function should possibly be helpers.
-
-  // TODO: Throw error if mine already created. Include `isCreated` flag.
   /**
    * Create the entrance to the mine. Should not be called while the mine remains created.
    */
@@ -102,7 +101,7 @@ export class Mine implements IMine {
   async createMine(): Promise<void> {
     if (this.mineIsCreated) {
       // TODO: create error type
-      throw Error('The mine is already created');
+      throw new Error('The mine is already created');
     }
 
     this.initMiningMechanics();
@@ -124,7 +123,6 @@ export class Mine implements IMine {
           this.realOrigin[1] + brickSize[1] * 2 * y,
           this.realOrigin[2],
         ];
-        // TODO: get resource type from a world generator
         createVoxelPromises.push(
           this.voxelManager.createVoxel(
             voxelPosition,
@@ -142,7 +140,7 @@ export class Mine implements IMine {
   async clearMine(): Promise<void> {
     if (!this.mineIsCreated) {
       // TODO: create error type
-      throw Error('There is no mine to clear');
+      throw new Error('There is no mine to clear');
     }
     this.voxelManager.clearVoxels();
     this.plugin.omegga.removeListener('interact', this.eventListener);
@@ -155,10 +153,15 @@ export class Mine implements IMine {
   }
 
   async hitVoxel(playerId: string, position: Vector): Promise<void> {
+    const playerData = await PlayerDataManager.getPlayerData(
+      this.plugin,
+      playerId
+    );
+
     const voxelData = this.voxelManager.getVoxel(position);
     if (!voxelData) {
       // TODO: create error type
-      throw Error(`Missing data for voxel at ${position}`);
+      throw new Error(`Missing data for voxel at ${position}`);
     }
 
     if (voxelData.hp >= 0) {
@@ -166,22 +169,16 @@ export class Mine implements IMine {
       // TODO: get power from player/miner
       voxelData.hp -= 1;
 
+      playerData.displayMiningMessage(voxelData);
+
       // TODO: refactor printing into PlayerMiner
-      const { color, name: displayName } = voxelData.type;
-      const name = displayName.toUpperCase();
-      const hexColor = rgbToHex(color);
-      const displayHp: string =
-        voxelData.hp > 0 ? voxelData.hp.toString() : 'MINED';
-      const msg =
-        `<size="30"><color="${hexColor}">${name}</></>` +
-        '<br>' +
-        `<b><size="40">${displayHp}</>`;
-      Omegga.middlePrint(playerId, msg);
       if (voxelData.hp <= 0) {
         await this.removeVoxel(position, voxelData);
       }
+
+      playerData.addResource(voxelData.type, 1);
     } else {
-      Omegga.middlePrint(playerId, BORDER_MESSAGE);
+      playerData.displayBorderMessage();
     }
   }
 

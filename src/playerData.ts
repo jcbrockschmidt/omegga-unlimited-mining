@@ -1,10 +1,25 @@
-import { PS } from 'omegga';
-import { UMStorage } from './types';
+import {
+  IVoxelInventory,
+  IVoxelType,
+  VoxelInventory,
+  VoxelInventoryDb,
+} from './resources';
+import { UMPlugin } from './types';
+import { IVoxel } from './voxel';
+
+const { rgbToHex } = OMEGGA_UTIL.color;
+
+export interface IPlayerDataDb {
+  money: number;
+  pickLevel: number;
+  resources: VoxelInventoryDb;
+}
 
 export interface IPlayerData {
-  playerId: string;
-  resources: { [voxelType: string]: number };
-  pickLevel: number;
+  displayMiningMessage(voxel: IVoxel): void;
+  displayBorderMessage(): void;
+  displayInventory(): void;
+  addResource(voxelType: IVoxelType, amount: number): void;
 }
 
 interface IPlayerDataAdapter extends IPlayerData {
@@ -16,16 +31,18 @@ interface IPlayerDataAdapter extends IPlayerData {
 const allAdapters: Map<string, IPlayerDataAdapter> = new Map();
 
 class PlayerDataAdapter implements IPlayerDataAdapter {
-  public playerId: string;
-  public resources: { [voxelType: string]: number };
-  public pickLevel: number;
-  private store: PS<UMStorage>;
+  private plugin: UMPlugin;
+  private playerId: string;
+  private money: number;
+  private pickLevel: number;
+  private resources: IVoxelInventory;
 
-  constructor(store: PS<UMStorage>, playerId: string) {
-    this.store = store;
+  constructor(plugin: UMPlugin, playerId: string) {
+    this.plugin = plugin;
     this.playerId = playerId;
-    this.resources = {};
+    this.money = 0;
     this.pickLevel = 1;
+    this.resources = new VoxelInventory();
   }
 
   private getStoreId(): `um_player_${string}` {
@@ -33,26 +50,81 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
   }
 
   async canLoad(): Promise<boolean> {
-    return (await this.store.get(this.getStoreId())) !== null;
+    return (await this.plugin.store.get(this.getStoreId())) !== null;
   }
 
   async load(): Promise<void> {
-    const savedData: IPlayerData = await this.store.get(this.getStoreId());
-    this.resources = savedData.resources;
+    const savedData: IPlayerDataDb = await this.plugin.store.get(
+      this.getStoreId()
+    );
     this.pickLevel = savedData.pickLevel;
+    this.money = savedData.money;
+    this.resources = new VoxelInventory(savedData.resources);
   }
 
   async save(): Promise<void> {
-    await this.store.set(this.getStoreId(), this as IPlayerData);
+    const dbData: IPlayerDataDb = {
+      money: this.money,
+      pickLevel: this.pickLevel,
+      resources: this.resources.toDb(),
+    };
+
+    await this.plugin.store.set(this.getStoreId(), dbData);
+  }
+
+  displayMiningMessage({ type, hp }: IVoxel): void {
+    const { color, name: displayName } = type;
+    const name = displayName.toUpperCase();
+    const hexColor = rgbToHex(color);
+    const displayHp: string = hp > 0 ? hp.toString() : 'MINED';
+    const msg =
+      `<size="30"><color="${hexColor}">${name}</></>` +
+      '<br>' +
+      `<b><size="40">${displayHp}</>`;
+    this.plugin.omegga.middlePrint(this.playerId, msg);
+  }
+
+  displayBorderMessage(): void {
+    this.plugin.omegga.middlePrint(
+      this.playerId,
+      '<size="30">BORDER</><br><b><size="40">CANNOT MINE</>'
+    );
+  }
+
+  displayInventory(): void {
+    const player = this.plugin.omegga.getPlayer(this.playerId);
+
+    const invEntries = this.resources.getAll();
+    // Sort inventory by resource display name.
+    invEntries.sort(
+      ([type1]: [IVoxelType, number], [type2]: [IVoxelType, number]) =>
+        type1.name.localeCompare(type2.name)
+    );
+    const msgLines: string[] = [
+      `<size="20"><b><u>${player.name}'s Inventory:</></></>`,
+    ];
+    let total = 0;
+    for (const [type, amount] of invEntries) {
+      const hexColor = rgbToHex(type.color);
+      msgLines.push(`> <color="${hexColor}">${type.name}</> - ${amount}`);
+      total += amount as number;
+    }
+    msgLines.push('_______________');
+    msgLines.push(`Total - ${total}`);
+    this.plugin.omegga.whisper(this.playerId, ...msgLines);
+  }
+
+  addResource(voxelType: IVoxelType, amount: number): void {
+    this.resources.add(voxelType, amount);
   }
 }
 
 async function getPlayerDataAdapter(
-  store: PS<UMStorage>,
+  plugin: UMPlugin,
   playerId: string
 ): Promise<IPlayerDataAdapter> {
   if (!allAdapters.has(playerId)) {
-    const newAdapter = new PlayerDataAdapter(store, playerId);
+    const newAdapter = new PlayerDataAdapter(plugin, playerId);
     if (await newAdapter.canLoad()) {
       await newAdapter.load();
     }
@@ -62,17 +134,17 @@ async function getPlayerDataAdapter(
 }
 
 async function getPlayerData(
-  store: PS<UMStorage>,
+  plugin: UMPlugin,
   playerId: string
 ): Promise<IPlayerData> {
-  return (await getPlayerDataAdapter(store, playerId)) as IPlayerData;
+  return (await getPlayerDataAdapter(plugin, playerId)) as IPlayerData;
 }
 
 async function savePlayerData(
-  store: PS<UMStorage>,
+  plugin: UMPlugin,
   playerId: string
 ): Promise<void> {
-  const adapter = await getPlayerDataAdapter(store, playerId);
+  const adapter = await getPlayerDataAdapter(plugin, playerId);
   adapter.save();
 }
 
