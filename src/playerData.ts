@@ -60,6 +60,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
   }
 
   async load(): Promise<void> {
+    console.log(`Loading data for ${this.playerId}`);
     const savedData: IPlayerDataDb = await this.plugin.store.get(
       this.getStoreId()
     );
@@ -69,6 +70,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
   }
 
   async save(): Promise<void> {
+    console.log(`Saving data for ${this.playerId}`);
     const dbData: IPlayerDataDb = {
       money: this.money,
       pickLevel: this.pickaxe.getLevel(),
@@ -171,7 +173,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
         this.playerId,
         `Cannot upgrade pickaxe. You need <color="00ff00">$</>${formattedDiff} more.`
       );
-      return;
+      return false;
     }
     const formattedCost = upgradeCost.toFixed(2);
     const newLevel = this.pickaxe.upgrade();
@@ -186,6 +188,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
     // TODO: can we play a sound effect?
     // TODO: announce to server? maybe only at milestones like first upgrade and every 10
     this.money -= upgradeCost;
+    return true;
   }
 
   getPickaxePower(): number {

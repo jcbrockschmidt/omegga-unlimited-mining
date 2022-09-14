@@ -112,7 +112,9 @@ export default class Plugin implements UMPlugin {
     try {
       const player = this.omegga.getPlayer(playerName);
       const playerData = await PlayerDataManager.getPlayerData(this, player.id);
-      playerData.tryUpgradePick();
+      if (playerData.tryUpgradePick()) {
+        await PlayerDataManager.savePlayerData(this, player.id);
+      }
     } catch (e) {
       console.log(e);
     }
