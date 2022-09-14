@@ -92,6 +92,17 @@ export default class Plugin implements UMPlugin {
       const player = this.omegga.getPlayer(playerName);
       const playerData = await PlayerDataManager.getPlayerData(this, player.id);
       playerData.displayStats();
+      await PlayerDataManager.savePlayerData(this, player.id);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async onCmdSellAll(playerName: string) {
+    try {
+      const player = this.omegga.getPlayer(playerName);
+      const playerData = await PlayerDataManager.getPlayerData(this, player.id);
+      playerData.sellAll();
     } catch (e) {
       console.log(e);
     }
@@ -107,7 +118,8 @@ export default class Plugin implements UMPlugin {
       .on('cmd:resetmine', this.onCmdResetMine.bind(this))
       .on('cmd:inventory', this.onCmdInventory.bind(this))
       .on('cmd:inv', this.onCmdInventory.bind(this))
-      .on('cmd:stats', this.onCmdStats.bind(this));
+      .on('cmd:stats', this.onCmdStats.bind(this))
+      .on('cmd:sellall', this.onCmdSellAll.bind(this));
 
     return {
       registeredCommands: [
@@ -117,6 +129,7 @@ export default class Plugin implements UMPlugin {
         'inventory',
         'inv',
         'stats',
+        'sellall',
       ],
     };
   }
@@ -130,7 +143,8 @@ export default class Plugin implements UMPlugin {
       .removeAllListeners('cmd:resetmine')
       .removeAllListeners('cmd:inventory')
       .removeAllListeners('cmd:inv')
-      .removeAllListeners('cmd:stats');
+      .removeAllListeners('cmd:stats')
+      .removeAllListeners('cmd:sellall');
 
     if (this.mine.isCreated()) {
       await this.mine.clearMine();

@@ -39,6 +39,12 @@
       "description": "Displays your stats (money, pick level, etc.)",
       "example": "/Stats",
       "args": []
+    },
+    {
+      "name": "/SellAll",
+      "description": "Sell all resources in your inventory",
+      "example": "/SellAll",
+      "args": []
     }
   ]
 }

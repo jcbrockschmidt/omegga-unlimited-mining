@@ -1,3 +1,4 @@
+import { getInvSellPrice, getResourceSellPrice } from './pricing';
 import {
   IVoxelInventory,
   IVoxelType,
@@ -21,6 +22,7 @@ export interface IPlayerData {
   displayInventory(): void;
   displayStats(): void;
   addResource(voxelType: IVoxelType, amount: number): void;
+  sellAll(): void;
 }
 
 interface IPlayerDataAdapter extends IPlayerData {
@@ -106,30 +108,55 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
       `<size="20"><b><u>${player.name}'s Inventory:</></></>`,
     ];
     let total = 0;
+    let totalSellValue = 0;
     for (const [type, amount] of invEntries) {
       const hexColor = rgbToHex(type.color);
-      msgLines.push(`> <color="${hexColor}"><i>${type.name}</></> - ${amount}`);
+      const sellValue = getResourceSellPrice(type) * amount;
+      totalSellValue += sellValue;
+      msgLines.push(
+        `> <color="${hexColor}"><i>${type.name}</></>` +
+          ` - ${amount}` +
+          ` - <color="00ff00">$</>${sellValue.toFixed(2)}`
+      );
       total += amount as number;
     }
     msgLines.push('_______________');
-    msgLines.push(`<color="ffff00"><i>Total</></> - ${total}`);
+    msgLines.push(
+      `<color="ffff00"><i>Total</></>` +
+        ` - ${total}` +
+        ` - <color="00ff00">$</>${totalSellValue.toFixed(2)}`
+    );
     this.plugin.omegga.whisper(this.playerId, ...msgLines);
   }
 
   displayStats(): void {
     const player = this.plugin.omegga.getPlayer(this.playerId);
+    const formattedMoney = this.money.toFixed(2);
     const msgLines: string[] = [
       `<size="20"><b><u>${player.name}'s Stats:</></></>`,
       `<color="ffff00"><i>Pick Level:</></> ${this.pickLevel}`,
-      `<color="ffff00"><i>Money:</></> <color="00ff00">$</>${this.money.toFixed(
-        2
-      )}`,
+      `<color="ffff00"><i>Money:</></> <color="00ff00">$</>${formattedMoney}`,
     ];
     this.plugin.omegga.whisper(this.playerId, ...msgLines);
   }
 
   addResource(voxelType: IVoxelType, amount: number): void {
     this.resources.add(voxelType, amount);
+  }
+
+  sellAll(): void {
+    if (this.resources.isEmpty()) {
+      this.plugin.omegga.whisper(this.playerId, 'Nothing to sell');
+      return;
+    }
+    const sellValue = getInvSellPrice(this.resources);
+    this.resources.clear();
+    this.money += sellValue;
+    const formattedValue = sellValue.toFixed(2);
+    this.plugin.omegga.whisper(
+      this.playerId,
+      `Sold all for <color="00ff00">$</>${formattedValue}`
+    );
   }
 }
 

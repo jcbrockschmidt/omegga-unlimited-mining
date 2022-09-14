@@ -8,6 +8,8 @@ export interface IVoxelInventory {
   set(type: IVoxelType, amount: number): void;
   add(type: IVoxelType, amount: number): number;
   getAll(): Array<[IVoxelType, number]>;
+  clear(): void;
+  isEmpty(): boolean;
   toDb(): VoxelInventoryDb;
 }
 
@@ -40,8 +42,11 @@ export class VoxelInventory implements IVoxelInventory {
     if (amount < 0) {
       // TODO: create error type
       throw new Error('Voxel amount cannot be negative');
+    } else if (amount === 0) {
+      this.inv.delete(type);
+    } else {
+      this.inv.set(type, amount);
     }
-    this.inv.set(type, amount);
   }
 
   add(type: IVoxelType, amount: number): number {
@@ -56,6 +61,14 @@ export class VoxelInventory implements IVoxelInventory {
 
   getAll(): Array<[IVoxelType, number]> {
     return Array.from(this.inv.entries());
+  }
+
+  clear(): void {
+    this.inv.clear();
+  }
+
+  isEmpty(): boolean {
+    return this.inv.size === 0;
   }
 
   toDb(): VoxelInventoryDb {
