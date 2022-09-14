@@ -23,6 +23,12 @@
       "args": []
     },
     {
+      "name": "/Inventory",
+      "description": "Displays your inventory",
+      "example": "/Inventory",
+      "args": []
+    },
+    {
       "name": "/Inv",
       "description": "Displays your inventory",
       "example": "/Inv",
