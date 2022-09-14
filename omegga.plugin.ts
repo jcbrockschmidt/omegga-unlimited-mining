@@ -37,44 +37,60 @@ export default class Plugin implements UMPlugin {
           console.log(e);
         }
       })
-      .on('cmd:initmine', async () => {
-        this.omegga.broadcast('Creating mining area...');
+      .on('cmd:createmine', async (playerName: string) => {
         try {
+          if (this.mine.isCreated()) {
+            this.omegga.whisper(playerName, 'Mine already created');
+            return;
+          }
+          this.omegga.broadcast('Creating mine...');
           await this.mine.createMine();
+          this.omegga.broadcast('Mine created');
         } catch (e) {
           console.log(e);
         }
       })
-      .on('cmd:clearmine', async () => {
-        this.omegga.broadcast('Clearing mining area...');
+      .on('cmd:clearmine', async (playerName: string) => {
         try {
+          if (!this.mine.isCreated()) {
+            this.omegga.whisper(playerName, 'No mine to clear');
+            return;
+          }
+          this.omegga.broadcast('Clearing mine...');
           await this.mine.clearMine();
+          this.omegga.broadcast('Mine cleared');
         } catch (e) {
           console.log(e);
         }
       })
-      .on('cmd:resetmine', async () => {
-        this.omegga.broadcast('Resetting mining area...');
+      .on('cmd:resetmine', async (playerName: string) => {
         try {
+          if (!this.mine.isCreated()) {
+            this.omegga.whisper(playerName, 'No mine to reset');
+            return;
+          }
+          this.omegga.broadcast('Resetting mine...');
           await this.mine.clearMine();
           await this.mine.createMine();
+          this.omegga.broadcast('Mine reset');
         } catch (e) {
           console.log(e);
         }
       });
 
-    return { registeredCommands: ['initmine', 'clearmine', 'resetmine'] };
+    return { registeredCommands: ['createmine', 'clearmine', 'resetmine'] };
   }
 
   async stop() {
     await PlayerDataManager.saveAllPlayerData();
 
     this.omegga
-      .removeAllListeners('cmd:initmine')
+      .removeAllListeners('cmd:createmine')
       .removeAllListeners('cmd:clearmine')
       .removeAllListeners('cmd:resetmine');
 
-    // TODO: Why does this fail?
-    // await this.mine.clearMine();
+    if (this.mine.isCreated()) {
+      await this.mine.clearMine();
+    }
   }
 }

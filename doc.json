@@ -5,14 +5,20 @@
   "config": {},
   "commands": [
     {
-      "name": "/InitMine",
-      "description": "Initializes the mining area",
-      "example": "/InitMine",
+      "name": "/CreateMine",
+      "description": "Creates the mine",
+      "example": "/CreateMine",
+      "args": []
+    },
+    {
+      "name": "/ClearMine",
+      "description": "Clears the mine",
+      "example": "/ClearMine",
       "args": []
     },
     {
       "name": "/ResetMine",
-      "description": "Resets the mining area",
+      "description": "Resets the mine",
       "example": "/ResetMine",
       "args": []
     }

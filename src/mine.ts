@@ -32,14 +32,21 @@ export interface IMine {
 
   // TODO: Throw error if mine already created. Include `isCreated` flag.
   /**
-   * Create the entrance to the mine.
+   * Create the entrance to the mine. Should not be called while the mine remains created.
    */
   createMine(): Promise<void>;
 
   /**
-   * Clear all voxels from the mine.
+   * Clear all voxels from the mine. Should only be called after the mine is created.
    */
   clearMine(): Promise<void>;
+
+  /**
+   * Determines whether or not the mine is created.
+   *
+   * @return Whether the mine is created.
+   */
+  isCreated(): boolean;
 
   /**
    * Hit a voxel on behalf of a player. May subtract its HP or delete it.
@@ -60,8 +67,8 @@ export class Mine implements IMine {
   private voxelTag: string;
   private voxelConfig: IVoxelConfig;
   private eventListener?: (args: BrickInteraction) => void;
-  // private eventListener?: (args: { player: any, position: Vector, brick_name: string, message: string }) => void;
   private voxelFaceToOffset: Record<VoxelFace, Vector>;
+  private mineIsCreated: boolean;
 
   /**
    * @param plugin Omegga plugin for Unlimited Mining.
@@ -88,9 +95,16 @@ export class Mine implements IMine {
       [VoxelFace.PosZ]: [0, 0, brickSize[2] * 2],
       [VoxelFace.NegZ]: [0, 0, -brickSize[2] * 2],
     };
+
+    this.mineIsCreated = false;
   }
 
   async createMine(): Promise<void> {
+    if (this.mineIsCreated) {
+      // TODO: create error type
+      throw Error('The mine is already created');
+    }
+
     this.initMiningMechanics();
 
     const createVoxelPromises = [];
@@ -121,11 +135,23 @@ export class Mine implements IMine {
       }
     }
     await Promise.all(createVoxelPromises);
+
+    this.mineIsCreated = true;
   }
 
   async clearMine(): Promise<void> {
+    if (!this.mineIsCreated) {
+      // TODO: create error type
+      throw Error('There is no mine to clear');
+    }
     this.voxelManager.clearVoxels();
     this.plugin.omegga.removeListener('interact', this.eventListener);
+
+    this.mineIsCreated = false;
+  }
+
+  isCreated(): boolean {
+    return this.mineIsCreated;
   }
 
   async hitVoxel(playerId: string, position: Vector): Promise<void> {
