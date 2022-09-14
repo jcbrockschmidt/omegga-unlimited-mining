@@ -12,6 +12,7 @@ import { IVoxel } from './voxel';
 const { rgbToHex } = OMEGGA_UTIL.color;
 
 export interface IPlayerDataDb {
+  playerName: string;
   money: number;
   pickLevel: number;
   resources: VoxelInventoryDb;
@@ -39,6 +40,7 @@ const allAdapters: Map<string, IPlayerDataAdapter> = new Map();
 class PlayerDataAdapter implements IPlayerDataAdapter {
   private plugin: UMPlugin;
   private playerId: string;
+  private playerName?: string;
   private money: number;
   private pickaxe: IPickaxe;
   private resources: IVoxelInventory;
@@ -49,6 +51,8 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
     this.money = 0;
     this.pickaxe = new Pickaxe();
     this.resources = new VoxelInventory();
+
+    this.playerName = this.plugin.omegga.getPlayer(this.playerId)?.name;
   }
 
   private getStoreId(): `um_player_${string}` {
@@ -60,24 +64,33 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
   }
 
   async load(): Promise<void> {
-    console.log(`Loading data for ${this.playerId}`);
     const savedData: IPlayerDataDb = await this.plugin.store.get(
       this.getStoreId()
     );
+    // The current player name should be more up-to-date than the saved player name.
+    this.playerName = this.playerName || savedData.playerName;
     this.pickaxe = new Pickaxe(savedData.pickLevel);
     this.money = savedData.money;
     this.resources = new VoxelInventory(savedData.resources);
+
+    console.log(
+      `Loaded data for ${this.playerName || '<UNKNOWN>'} (${this.playerId})`
+    );
   }
 
   async save(): Promise<void> {
-    console.log(`Saving data for ${this.playerId}`);
     const dbData: IPlayerDataDb = {
+      playerName: this.playerName,
       money: this.money,
       pickLevel: this.pickaxe.getLevel(),
       resources: this.resources.toDb(),
     };
 
     await this.plugin.store.set(this.getStoreId(), dbData);
+
+    console.log(
+      `Saved data for ${this.playerName || '<UNKNOWN>'} (${this.playerId})`
+    );
   }
 
   displayMiningMessage({ type, hp }: IVoxel): void {
@@ -105,7 +118,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
       `<size="20"><b><u>${player.name}'s Inventory:</></></>`,
     ];
     if (this.resources.isEmpty()) {
-      msgLines.push('<i>Empty</>')
+      msgLines.push('<i>Empty</>');
     } else {
       const invEntries = this.resources.getAll();
       // Sort inventory by resource display name.

@@ -92,7 +92,6 @@ export default class Plugin implements UMPlugin {
       const player = this.omegga.getPlayer(playerName);
       const playerData = await PlayerDataManager.getPlayerData(this, player.id);
       playerData.displayStats();
-      await PlayerDataManager.savePlayerData(this, player.id);
     } catch (e) {
       console.log(e);
     }
@@ -103,6 +102,7 @@ export default class Plugin implements UMPlugin {
       const player = this.omegga.getPlayer(playerName);
       const playerData = await PlayerDataManager.getPlayerData(this, player.id);
       playerData.sellAll();
+      await PlayerDataManager.savePlayerData(this, player.id);
     } catch (e) {
       console.log(e);
     }
