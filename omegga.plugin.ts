@@ -87,6 +87,16 @@ export default class Plugin implements UMPlugin {
     }
   }
 
+  async onCmdStats(playerName: string) {
+    try {
+      const player = this.omegga.getPlayer(playerName);
+      const playerData = await PlayerDataManager.getPlayerData(this, player.id);
+      playerData.displayStats();
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   async init() {
     // TODO: delete world plate
 
@@ -96,7 +106,8 @@ export default class Plugin implements UMPlugin {
       .on('cmd:clearmine', this.onCmdClearMine.bind(this))
       .on('cmd:resetmine', this.onCmdResetMine.bind(this))
       .on('cmd:inventory', this.onCmdInventory.bind(this))
-      .on('cmd:inv', this.onCmdInventory.bind(this));
+      .on('cmd:inv', this.onCmdInventory.bind(this))
+      .on('cmd:stats', this.onCmdStats.bind(this));
 
     return {
       registeredCommands: [
@@ -105,6 +116,7 @@ export default class Plugin implements UMPlugin {
         'resetmine',
         'inventory',
         'inv',
+        'stats',
       ],
     };
   }
@@ -117,7 +129,8 @@ export default class Plugin implements UMPlugin {
       .removeAllListeners('cmd:clearmine')
       .removeAllListeners('cmd:resetmine')
       .removeAllListeners('cmd:inventory')
-      .removeAllListeners('cmd:inv');
+      .removeAllListeners('cmd:inv')
+      .removeAllListeners('cmd:stats');
 
     if (this.mine.isCreated()) {
       await this.mine.clearMine();

@@ -19,6 +19,7 @@ export interface IPlayerData {
   displayMiningMessage(voxel: IVoxel): void;
   displayBorderMessage(): void;
   displayInventory(): void;
+  displayStats(): void;
   addResource(voxelType: IVoxelType, amount: number): void;
 }
 
@@ -36,6 +37,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
   private money: number;
   private pickLevel: number;
   private resources: IVoxelInventory;
+  private totalMined: number;
 
   constructor(plugin: UMPlugin, playerId: string) {
     this.plugin = plugin;
@@ -106,11 +108,23 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
     let total = 0;
     for (const [type, amount] of invEntries) {
       const hexColor = rgbToHex(type.color);
-      msgLines.push(`> <color="${hexColor}">${type.name}</> - ${amount}`);
+      msgLines.push(`> <color="${hexColor}"><i>${type.name}</></> - ${amount}`);
       total += amount as number;
     }
     msgLines.push('_______________');
-    msgLines.push(`Total - ${total}`);
+    msgLines.push(`<color="ffff00"><i>Total</></> - ${total}`);
+    this.plugin.omegga.whisper(this.playerId, ...msgLines);
+  }
+
+  displayStats(): void {
+    const player = this.plugin.omegga.getPlayer(this.playerId);
+    const msgLines: string[] = [
+      `<size="20"><b><u>${player.name}'s Stats:</></></>`,
+      `<color="ffff00"><i>Pick Level:</></> ${this.pickLevel}`,
+      `<color="ffff00"><i>Money:</></> <color="00ff00">$</>${this.money.toFixed(
+        2
+      )}`,
+    ];
     this.plugin.omegga.whisper(this.playerId, ...msgLines);
   }
 
