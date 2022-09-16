@@ -23,9 +23,13 @@ export interface IPlayerData {
   displayBorderMessage(): void;
   displayInventory(): void;
   displayStats(): void;
+  getMoney(): number;
   addResource(voxelType: IVoxelType, amount: number): void;
-  sellAll(): void;
-  tryUpgradePick(): boolean;
+  hasResources(): boolean;
+  getTotalResourcesValue(): number;
+  sellAllResources(): number;
+  getPickUpgradeCost(): number;
+  upgradePick(): number;
   getPickaxePower(): number;
 }
 
@@ -101,7 +105,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
     const msg =
       `<size="30"><color="${hexColor}">${name}</></>` +
       '<br>' +
-      `<b><size="40">${displayHp}</>`;
+      `<b><size="40">${displayHp}</></>`;
     this.plugin.omegga.middlePrint(this.playerId, msg);
   }
 
@@ -162,49 +166,43 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
     this.plugin.omegga.whisper(this.playerId, ...msgLines);
   }
 
+  getMoney(): number {
+    return this.money;
+  }
+
   addResource(voxelType: IVoxelType, amount: number): void {
     this.resources.add(voxelType, amount);
   }
 
-  sellAll(): void {
-    if (this.resources.isEmpty()) {
-      this.plugin.omegga.whisper(this.playerId, 'Nothing to sell.');
-      return;
-    }
+  hasResources(): boolean {
+    return this.resources.isEmpty();
+  }
+
+  getTotalResourcesValue(): number {
+    return getInvSellPrice(this.resources);
+  }
+
+  sellAllResources(): number {
     const sellValue = getInvSellPrice(this.resources);
     this.resources.clear();
     this.money += sellValue;
-    const formattedValue = sellValue.toFixed(2);
-    this.plugin.omegga.whisper(
-      this.playerId,
-      `Sold all for <color="00ff00">$</>${formattedValue}.`
-    );
+    return sellValue;
   }
 
-  tryUpgradePick(): boolean {
+  getPickUpgradeCost(): number {
+    return this.pickaxe.getUpgradeCost();
+  }
+
+  upgradePick(): number {
     const upgradeCost = this.pickaxe.getUpgradeCost();
     if (upgradeCost > this.money) {
-      const formattedDiff = (upgradeCost - this.money).toFixed(2);
-      this.plugin.omegga.whisper(
-        this.playerId,
-        `Cannot upgrade pickaxe. You need <color="00ff00">$</>${formattedDiff} more.`
-      );
-      return false;
+      // TODO: create error type
+      throw new Error('Not enough money to upgrade pickaxe');
     }
-    const formattedCost = upgradeCost.toFixed(2);
+
     const newLevel = this.pickaxe.upgrade();
-    this.plugin.omegga.whisper(
-      this.playerId,
-      `Upgraded pickaxe to level <color="ffff00"><b>${newLevel}</></> for <color="00ff00">$</>${formattedCost}.`
-    );
-    this.plugin.omegga.middlePrint(
-      this.playerId,
-      `<size="30">PICKAXE LEVEL</><br><b><size="40">《 <color="ffff00">${newLevel}</> 》</>`
-    );
-    // TODO: can we play a sound effect?
-    // TODO: announce to server? maybe only at milestones like first upgrade and every 10
     this.money -= upgradeCost;
-    return true;
+    return newLevel;
   }
 
   getPickaxePower(): number {

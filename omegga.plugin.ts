@@ -3,8 +3,10 @@ import { OL, PS, PC, Vector, OmeggaPlayer, WriteSaveObject } from 'omegga';
 import path from 'path';
 import {
   IMine,
+  IStationManager,
   Mine,
   PlayerDataManager,
+  StationManager,
   UMConfig,
   UMPlugin,
   UMStorage,
@@ -33,12 +35,14 @@ export default class Plugin implements UMPlugin {
 
   private mine: IMine;
   private spawnSaveData: WriteSaveObject;
+  private stationManager: IStationManager;
 
   constructor(omegga: OL, config: PC<UMConfig>, store: PS<UMStorage>) {
     this.omegga = omegga;
     this.config = config;
     this.store = store;
     this.mine = new Mine(this, MINE_ORIGIN, MINE_WIDTH, MINE_HEIGHT);
+    this.stationManager = new StationManager(this);
 
     this.spawnSaveData = OMEGGA_UTIL.brs.read(fs.readFileSync(SPAWN_SAVE_PATH));
   }
@@ -108,29 +112,6 @@ export default class Plugin implements UMPlugin {
     }
   }
 
-  async onCmdSellAll(playerName: string) {
-    try {
-      const player = this.omegga.getPlayer(playerName);
-      const playerData = await PlayerDataManager.getPlayerData(this, player.id);
-      playerData.sellAll();
-      await PlayerDataManager.savePlayerData(this, player.id);
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  async onCmdUpgradePick(playerName: string) {
-    try {
-      const player = this.omegga.getPlayer(playerName);
-      const playerData = await PlayerDataManager.getPlayerData(this, player.id);
-      if (playerData.tryUpgradePick()) {
-        await PlayerDataManager.savePlayerData(this, player.id);
-      }
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
   async init() {
     // Make minigame config visible to Omegga as a preset.
     const minigamePresetDir = path.resolve(this.omegga.presetPath, 'Minigame');
@@ -147,23 +128,18 @@ export default class Plugin implements UMPlugin {
       .on('cmd:resetmine', this.onCmdResetMine.bind(this))
       .on('cmd:inventory', this.onCmdInventory.bind(this))
       .on('cmd:inv', this.onCmdInventory.bind(this))
-      .on('cmd:stats', this.onCmdStats.bind(this))
-      .on('cmd:sellall', this.onCmdSellAll.bind(this))
-      .on('cmd:upgradepick', this.onCmdUpgradePick.bind(this));
+      .on('cmd:stats', this.onCmdStats.bind(this));
+
+    this.stationManager.init();
 
     return {
-      registeredCommands: [
-        'resetmine',
-        'inventory',
-        'inv',
-        'stats',
-        'sellall',
-        'upgradepick',
-      ],
+      registeredCommands: ['resetmine', 'inventory', 'inv', 'stats'],
     };
   }
 
   async stop() {
+    this.stationManager.stop();
+
     await PlayerDataManager.saveAllPlayerData();
 
     this.omegga
@@ -171,8 +147,7 @@ export default class Plugin implements UMPlugin {
       .removeAllListeners('cmd:inventory')
       .removeAllListeners('cmd:inv')
       .removeAllListeners('cmd:stats')
-      .removeAllListeners('cmd:sellall')
-      .removeAllListeners('cmd:upgradepick');
+      .removeAllListeners('cmd:sellall');
 
     if (this.mine.isCreated()) {
       await this.mine.clearMine();

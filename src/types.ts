@@ -1,11 +1,11 @@
 import OmeggaPlugin from 'omegga';
-import { IPlayerDataRaw } from './playerData';
+import { IPlayerDataDb } from './playerData';
 
 // TODO: define config
 export type UMConfig = { foo: string };
 
 export type UMStorage = {
-  [key: `um_player_${string}`]: IPlayerDataRaw;
+  [key: `um_player_${string}`]: IPlayerDataDb;
 };
 
 export type UMPlugin = OmeggaPlugin<UMConfig, UMStorage>;

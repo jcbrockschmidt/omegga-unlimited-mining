@@ -27,18 +27,6 @@
       "description": "Displays your stats (money, pick level, etc.)",
       "example": "/Stats",
       "args": []
-    },
-    {
-      "name": "/SellAll",
-      "description": "Sell all resources in your inventory",
-      "example": "/SellAll",
-      "args": []
-    },
-    {
-      "name": "/UpgradePick",
-      "description": "Upgrade your pick to the next level if you can afford it",
-      "example": "/UpgradePick",
-      "args": []
     }
   ]
 }
