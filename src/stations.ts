@@ -1,4 +1,5 @@
 import { BrickInteraction } from 'omegga';
+import { IExpiringSet, TimedExpiringSet } from './expiringSet';
 import { PlayerDataManager } from './playerData';
 import { UMPlugin } from './types';
 
@@ -15,9 +16,15 @@ export interface IStationManager {
 export class StationManager {
   private plugin: UMPlugin;
   private eventListener?: (args: BrickInteraction) => void;
+  private sellWaitingConfirm: IExpiringSet<string>;
+  private upgradeWaitingConfirm: IExpiringSet<string>;
 
   constructor(plugin: UMPlugin) {
     this.plugin = plugin;
+
+    // Players have 5 seconds to confirm station interactions.
+    this.sellWaitingConfirm = new TimedExpiringSet(5000);
+    this.upgradeWaitingConfirm = new TimedExpiringSet(5000);
   }
 
   private async handleSellAll(playerId: string) {
@@ -35,6 +42,24 @@ export class StationManager {
       return;
     }
 
+    if (!this.sellWaitingConfirm.has(playerId)) {
+      const sellValue = playerData.getTotalResourcesValue();
+      const formattedValue = sellValue.toFixed(2);
+      Omegga.whisper(
+        playerId,
+        `Sell all resources for <color="00ff00">$</><b>${formattedValue}</>?`,
+        '<size="15"><color="ffff00"><i>Click again to confirm.</></></>'
+      );
+      Omegga.middlePrint(
+        playerId,
+        `<size="40">SELL FOR <b><color="00ff00">$</>${formattedValue}</>?</>` +
+          '<br>' +
+          `<size="20"><color="ffff00"><i>CLICK TO CONFIRM</></></>`
+      );
+      this.sellWaitingConfirm.add(playerId);
+      return;
+    }
+
     const sellValue = playerData.sellAllResources();
     const formattedValue = sellValue.toFixed(2);
     Omegga.middlePrint(
@@ -48,6 +73,8 @@ export class StationManager {
       `Sold all resources for <color="00ff00">$</>${formattedValue}</>.`
     );
     await PlayerDataManager.savePlayerData(this.plugin, playerId);
+
+    this.sellWaitingConfirm.delete(playerId);
   }
 
   private async handleUpgradePick(playerId: string) {
@@ -68,6 +95,23 @@ export class StationManager {
       return;
     }
 
+    if (!this.upgradeWaitingConfirm.has(playerId)) {
+      const formattedValue = upgradeCost.toFixed(2);
+      Omegga.whisper(
+        playerId,
+        `Upgrade pickaxe for <color="00ff00">$</><b>${formattedValue}</>?`,
+        '<size="15"><color="ffff00"><i>Click again to confirm.</></></>'
+      );
+      Omegga.middlePrint(
+        playerId,
+        `<size="40">UPGRADE FOR <b><color="00ff00">$</>${formattedValue}</>?</>` +
+          '<br>' +
+          `<size="20"><color="ffff00"><i>CLICK TO CONFIRM</></>`
+      );
+      this.upgradeWaitingConfirm.add(playerId);
+      return;
+    }
+
     const newLevel = playerData.upgradePick();
     const formattedCost = upgradeCost.toFixed(2);
     Omegga.whisper(
@@ -82,6 +126,8 @@ export class StationManager {
     );
 
     await PlayerDataManager.savePlayerData(this.plugin, playerId);
+
+    this.upgradeWaitingConfirm.delete(playerId);
   }
 
   init(): void {
