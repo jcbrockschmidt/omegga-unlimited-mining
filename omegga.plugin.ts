@@ -113,6 +113,8 @@ export default class Plugin implements UMPlugin {
       await this.mine.clearMine();
       await this.mine.createMine();
       this.omegga.broadcast('Mine reset');
+      // We assume there is only one minigame--the minigame for this plugin.
+      this.omegga.resetMinigame(0);
     } catch (e) {
       console.log(e);
     }
