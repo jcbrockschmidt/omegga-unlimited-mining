@@ -24,15 +24,7 @@ const MINE_WIDTH = 20;
 const MINE_HEIGHT = 20;
 
 const MINIGAME_PRESET = 'unlimited-mining';
-const MINIGAME_PRESET_DIR = path.resolve(
-  __dirname,
-  '../../../data/Saved/Presets/Minigame'
-);
-const MINIGAME_CFG_SRC_PATH = path.resolve(__dirname, '../data/minigame.bp');
-const MINIGAME_CFG_DEST_PATH = path.resolve(
-  MINIGAME_PRESET_DIR,
-  `${MINIGAME_PRESET}.bp`
-);
+const MINIGAME_CFG_PATH = path.resolve(__dirname, '../data/minigame.bp');
 
 export default class Plugin implements UMPlugin {
   omegga: OL;
@@ -51,6 +43,18 @@ export default class Plugin implements UMPlugin {
     this.spawnSaveData = OMEGGA_UTIL.brs.read(fs.readFileSync(SPAWN_SAVE_PATH));
   }
 
+  checkCmdAdmin(playerName: string): boolean {
+    const player = this.omegga.getPlayer(playerName);
+    if (!player.getRoles().includes('Admin')) {
+      this.omegga.whisper(
+        playerName,
+        '<color="ff0000"><b>You are not admin</></>'
+      );
+      return false;
+    }
+    return true;
+  }
+
   async onStart() {
     this.omegga.loadMinigame(MINIGAME_PRESET);
     this.omegga.loadSaveData(this.spawnSaveData, { offZ: SPAWN_OFFSET_Z });
@@ -67,6 +71,8 @@ export default class Plugin implements UMPlugin {
 
   async onCmdCreateMine(playerName: string) {
     try {
+      if (!this.checkCmdAdmin(playerName)) return;
+
       if (this.mine.isCreated()) {
         this.omegga.whisper(playerName, 'Mine already created');
         return;
@@ -81,6 +87,8 @@ export default class Plugin implements UMPlugin {
 
   async onCmdClearMine(playerName: string) {
     try {
+      if (!this.checkCmdAdmin(playerName)) return;
+
       if (!this.mine.isCreated()) {
         this.omegga.whisper(playerName, 'No mine to clear');
         return;
@@ -95,6 +103,8 @@ export default class Plugin implements UMPlugin {
 
   async onCmdResetMine(playerName: string) {
     try {
+      if (!this.checkCmdAdmin(playerName)) return;
+
       if (!this.mine.isCreated()) {
         this.omegga.whisper(playerName, 'No mine to reset');
         return;
@@ -153,11 +163,16 @@ export default class Plugin implements UMPlugin {
 
   async init() {
     // Make minigame config visible to Omegga as a preset.
-    fs.mkdirSync(MINIGAME_PRESET_DIR, { recursive: true });
-    fs.copyFileSync(MINIGAME_CFG_SRC_PATH, MINIGAME_CFG_DEST_PATH);
+    const minigamePresetDir = path.resolve(this.omegga.presetPath, 'Minigame');
+    fs.mkdirSync(minigamePresetDir, { recursive: true });
+    const minigameCopyPath = path.resolve(
+      minigamePresetDir,
+      `${MINIGAME_PRESET}.bp`
+    );
+    fs.copyFileSync(MINIGAME_CFG_PATH, minigameCopyPath);
 
     this.omegga
-      .on('start', this.onStart.bind(this))
+      .once('start', this.onStart.bind(this))
       .on('leave', this.onLeave.bind(this))
       .on('cmd:createmine', this.onCmdCreateMine.bind(this))
       .on('cmd:clearmine', this.onCmdClearMine.bind(this))
