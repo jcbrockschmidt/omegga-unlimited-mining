@@ -1,3 +1,4 @@
+import { formatMoney } from './formatting';
 import { IPickaxe, Pickaxe } from './pickaxe';
 import { getInvSellPrice, getResourceSellPrice } from './pricing';
 import {
@@ -139,7 +140,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
         msgLines.push(
           `> <color="${hexColor}"><i>${type.name}</></>` +
             ` - ${amount}` +
-            ` - <color="00ff00">$</>${sellValue.toFixed(2)}`
+            ` - ${formatMoney(sellValue)}`
         );
         total += amount as number;
       }
@@ -147,7 +148,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
       msgLines.push(
         `<color="ffff00"><i>Total</></>` +
           ` - ${total}` +
-          ` - <color="00ff00">$</>${totalSellValue.toFixed(2)}`
+          ` - ${formatMoney(totalSellValue)}`
       );
     }
     this.plugin.omegga.whisper(this.playerId, ...msgLines);
@@ -156,12 +157,13 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
   displayStats(): void {
     const player = this.plugin.omegga.getPlayer(this.playerId);
     const pickLevel = this.pickaxe.getLevel();
-    const pickUpgradeCost = this.pickaxe.getUpgradeCost().toFixed(2);
-    const formattedMoney = this.money.toFixed(2);
+    const pickUpgradeCost = this.pickaxe.getUpgradeCost();
     const msgLines: string[] = [
       `<size="20"><b><u>${player.name}'s Stats:</></></>`,
-      `<color="ffff00"><i>Pick Level:</></> ${pickLevel} (next for <color="00ff00">$</>${pickUpgradeCost})`,
-      `<color="ffff00"><i>Money:</></> <color="00ff00">$</>${formattedMoney}`,
+      `<color="ffff00"><i>Pick Level:</></> ${pickLevel} (next for ${formatMoney(
+        pickUpgradeCost
+      )})`,
+      `<color="ffff00"><i>Money:</></> ${formatMoney(this.money)}`,
     ];
     this.plugin.omegga.whisper(this.playerId, ...msgLines);
   }

@@ -1,5 +1,6 @@
 import { BrickInteraction } from 'omegga';
 import { IExpiringSet, TimedExpiringSet } from './expiringSet';
+import { formatMoney } from './formatting';
 import { PlayerDataManager } from './playerData';
 import { UMPlugin } from './types';
 
@@ -44,15 +45,14 @@ export class StationManager {
 
     if (!this.sellWaitingConfirm.has(playerId)) {
       const sellValue = playerData.getTotalResourcesValue();
-      const formattedValue = sellValue.toFixed(2);
       Omegga.whisper(
         playerId,
-        `Sell all resources for <color="00ff00">$</><b>${formattedValue}</>?`,
+        `Sell all resources for ${formatMoney(sellValue)}?`,
         '<size="15"><color="ffff00"><i>Click again to confirm.</></></>'
       );
       Omegga.middlePrint(
         playerId,
-        `<size="40">SELL FOR <b><color="00ff00">$</>${formattedValue}</>?</>` +
+        `<size="40">SELL FOR ${formatMoney(sellValue)}?</>` +
           '<br>' +
           `<size="20"><color="ffff00"><i>CLICK TO CONFIRM</></></>`
       );
@@ -61,16 +61,15 @@ export class StationManager {
     }
 
     const sellValue = playerData.sellAllResources();
-    const formattedValue = sellValue.toFixed(2);
     Omegga.middlePrint(
       playerId,
       '<size="30">SOLD FOR</>' +
         '<br>' +
-        `<size="40"><b><color="00ff00">$</>${formattedValue}</></>`
+        `<size="40">${formatMoney(sellValue)}</>`
     );
     Omegga.whisper(
       playerId,
-      `Sold all resources for <color="00ff00">$</>${formattedValue}</>.`
+      `Sold all resources for ${formatMoney(sellValue)}</>.`
     );
     await PlayerDataManager.savePlayerData(this.plugin, playerId);
 
@@ -85,26 +84,25 @@ export class StationManager {
     const upgradeCost = playerData.getPickUpgradeCost();
     const playerMoney = playerData.getMoney();
     if (upgradeCost > playerMoney) {
-      const formattedDiff = (upgradeCost - playerMoney).toFixed(2);
+      const diff = upgradeCost - playerMoney;
       Omegga.middlePrint(
         playerId,
         '<size="40"><b><u>CANNOT UPGRADE</></></>' +
           '<br>' +
-          `<size="30">NEED <color="00ff00">$</>${formattedDiff}</>`
+          `<size="30">NEED ${formatMoney(diff)}</>`
       );
       return;
     }
 
     if (!this.upgradeWaitingConfirm.has(playerId)) {
-      const formattedValue = upgradeCost.toFixed(2);
       Omegga.whisper(
         playerId,
-        `Upgrade pickaxe for <color="00ff00">$</><b>${formattedValue}</>?`,
+        `Upgrade pickaxe for ${formatMoney(upgradeCost)}?`,
         '<size="15"><color="ffff00"><i>Click again to confirm.</></></>'
       );
       Omegga.middlePrint(
         playerId,
-        `<size="40">UPGRADE FOR <b><color="00ff00">$</>${formattedValue}</>?</>` +
+        `<size="40">UPGRADE FOR ${formatMoney(upgradeCost)}?</>` +
           '<br>' +
           `<size="20"><color="ffff00"><i>CLICK TO CONFIRM</></>`
       );
@@ -113,10 +111,11 @@ export class StationManager {
     }
 
     const newLevel = playerData.upgradePick();
-    const formattedCost = upgradeCost.toFixed(2);
     Omegga.whisper(
       playerId,
-      `Upgraded pickaxe to level <color="ffff00"><b>${newLevel}</></> for <color="00ff00">$</>${formattedCost}.`
+      `Upgraded pickaxe to level <color="ffff00"><b>${newLevel}</></> for ${formatMoney(
+        upgradeCost
+      )}.`
     );
     Omegga.middlePrint(
       playerId,
