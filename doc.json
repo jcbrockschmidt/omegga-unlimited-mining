@@ -5,18 +5,6 @@
   "config": {},
   "commands": [
     {
-      "name": "/CreateMine",
-      "description": "Creates the mine",
-      "example": "/CreateMine",
-      "args": []
-    },
-    {
-      "name": "/ClearMine",
-      "description": "Clears the mine",
-      "example": "/ClearMine",
-      "args": []
-    },
-    {
       "name": "/ResetMine",
       "description": "Resets the mine",
       "example": "/ResetMine",

@@ -69,38 +69,6 @@ export default class Plugin implements UMPlugin {
     }
   }
 
-  async onCmdCreateMine(playerName: string) {
-    try {
-      if (!this.checkCmdAdmin(playerName)) return;
-
-      if (this.mine.isCreated()) {
-        this.omegga.whisper(playerName, 'Mine already created');
-        return;
-      }
-      this.omegga.broadcast('Creating mine...');
-      await this.mine.createMine();
-      this.omegga.broadcast('Mine created');
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  async onCmdClearMine(playerName: string) {
-    try {
-      if (!this.checkCmdAdmin(playerName)) return;
-
-      if (!this.mine.isCreated()) {
-        this.omegga.whisper(playerName, 'No mine to clear');
-        return;
-      }
-      this.omegga.broadcast('Clearing mine...');
-      await this.mine.clearMine();
-      this.omegga.broadcast('Mine cleared');
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
   async onCmdResetMine(playerName: string) {
     try {
       if (!this.checkCmdAdmin(playerName)) return;
@@ -176,8 +144,6 @@ export default class Plugin implements UMPlugin {
     this.omegga
       .once('start', this.onStart.bind(this))
       .on('leave', this.onLeave.bind(this))
-      .on('cmd:createmine', this.onCmdCreateMine.bind(this))
-      .on('cmd:clearmine', this.onCmdClearMine.bind(this))
       .on('cmd:resetmine', this.onCmdResetMine.bind(this))
       .on('cmd:inventory', this.onCmdInventory.bind(this))
       .on('cmd:inv', this.onCmdInventory.bind(this))
@@ -187,8 +153,6 @@ export default class Plugin implements UMPlugin {
 
     return {
       registeredCommands: [
-        'createmine',
-        'clearmine',
         'resetmine',
         'inventory',
         'inv',
@@ -203,8 +167,6 @@ export default class Plugin implements UMPlugin {
     await PlayerDataManager.saveAllPlayerData();
 
     this.omegga
-      .removeAllListeners('cmd:createmine')
-      .removeAllListeners('cmd:clearmine')
       .removeAllListeners('cmd:resetmine')
       .removeAllListeners('cmd:inventory')
       .removeAllListeners('cmd:inv')
