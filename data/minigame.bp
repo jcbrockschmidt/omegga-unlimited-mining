@@ -1,0 +1,100 @@
+{
+	"formatVersion": "1",
+	"presetVersion": "1",
+	"type": "Minigame",
+	"data":
+	{
+		"gameTypeDescriptor": "GM_Sandbox",
+		"rulesetSettings":
+		{
+			"rulesetName": "Unlimited Mining",
+			"rulesetDescription": "",
+			"rulesetColor":
+			{
+				"r": 0,
+				"g": 153,
+				"b": 255,
+				"a": 255
+			},
+			"rulesetType": "DefaultMinigame",
+			"rulesetEntryPolicy": "Public",
+			"relevantBricks": "OwnerOnly"
+		},
+		"gamemodeSettings":
+		{
+		},
+		"unaffiliatedTeamSettings":
+		{
+			"teamName": "",
+			"teamColor":
+			{
+				"r": 0,
+				"g": 0,
+				"b": 0,
+				"a": 0
+			},
+			"playerRespawnTime": 1,
+			"teamSpawnMode": "UseAllSpawnBricks",
+			"teamHealthMultiplier": 1,
+			"teamSpeedMultiplier": 1,
+			"teamJumpHeightMultiplier": 1,
+			"bTeamCollision": false,
+			"bTeamCanStack": false,
+			"controlModeOverride": "UserChoice",
+			"bEnableCameraBlockedEffects": true,
+			"bFriendlyDamage": false,
+			"bSelfDamageMode": false,
+			"bPhysicsDamageMode": false,
+			"bWeaponDamageMode": false,
+			"bEnvironmentDamageMode": false,
+			"waterDamagePerSecond": 0,
+			"respawnInvincibilityTime": 1,
+			"respawnSelfDestructPreventionTime": 1,
+			"maxItemSlots": 10,
+			"startingItem0": "None",
+			"startingItem1": "None",
+			"startingItem2": "None",
+			"startingItem3": "None",
+			"startingItem4": "None",
+			"startingItem5": "None",
+			"startingItem6": "None",
+			"startingItem7": "None",
+			"startingItem8": "None",
+			"startingItem9": "None",
+			"specialBrickUsePolicy": "TeamColoredOrUnaffiliated",
+			"bCanReachGoalPoints": true,
+			"bCanUseCheckPoints": true,
+			"bRememberCheckPointBetweenJoins": true,
+			"teamNameDistance": 60000,
+			"enemyNameDistanceMultiplier": 1,
+			"bEnableTeamHealthRegeneration": false,
+			"teamHealthRegenStartTime": 3,
+			"teamHealthRegenPerSecond": 10,
+			"playersSpectatorsCanView": "OwnTeam",
+			"bForceSpectatorMode": false,
+			"bAllowSpectatorFreeCamera": false,
+			"spectatorChat": "ToAll",
+			"bLimitChatRange": false,
+			"chatRange": 128,
+			"bDeathNotifications": true,
+			"visibility": "VisibleToAll",
+			"fakeTeamWhenHidden": "",
+			"p_Tools.Applicator.Use": false,
+			"p_Bricks.ClearOwn": false,
+			"p_Bricks.Delete": false,
+			"p_Bricks.Paint": false,
+			"p_Bricks.Place": false,
+			"p_Server.Chat": true,
+			"p_Self.Fly": true,
+			"p_Tools.Circler.Use": false,
+			"p_Prefabs.Load": false,
+			"p_Tools.Resizer.Use": false,
+			"p_Tools.Selector.Use": false,
+			"p_Self.SelfDestruct": true,
+			"p_Items.Spawn": false,
+			"p_Self.Sprint": true,
+			"p_Self.Flashlight": true
+		},
+		"customTeamSettings": []
+	}
+}

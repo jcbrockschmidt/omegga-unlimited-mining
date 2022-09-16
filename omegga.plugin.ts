@@ -1,4 +1,6 @@
-import { OL, PS, PC, Vector, OmeggaPlayer } from 'omegga';
+import fs from 'fs';
+import { OL, PS, PC, Vector, OmeggaPlayer, WriteSaveObject } from 'omegga';
+import path from 'path';
 import {
   IMine,
   Mine,
@@ -8,9 +10,29 @@ import {
   UMStorage,
 } from './src';
 
-const MINE_ORIGIN: Vector = [153, -13, 341];
-const MINE_WIDTH = 10;
+// We want the mine to start as high as possible to prevent players from
+// reaching the world's baseplate. This is the highest order of magnitude we
+// can use without problems. Use 10000000 results in a black screen when a
+// player spawns in. We also can't start underneath the world's baseplate since
+// minigame spawn points won't work.
+const SPAWN_OFFSET_Z = 1000000;
+const SPAWN_SAVE_PATH = `${__dirname}/../data/spawn.brs`;
+
+// The mine origin and size is hard-coded to align with the spawn build.
+const MINE_ORIGIN: Vector = [0, 0, 10 + SPAWN_OFFSET_Z];
+const MINE_WIDTH = 20;
 const MINE_HEIGHT = 20;
+
+const MINIGAME_PRESET = 'unlimited-mining';
+const MINIGAME_PRESET_DIR = path.resolve(
+  __dirname,
+  '../../../data/Saved/Presets/Minigame'
+);
+const MINIGAME_CFG_SRC_PATH = path.resolve(__dirname, '../data/minigame.bp');
+const MINIGAME_CFG_DEST_PATH = path.resolve(
+  MINIGAME_PRESET_DIR,
+  `${MINIGAME_PRESET}.bp`
+);
 
 export default class Plugin implements UMPlugin {
   omegga: OL;
@@ -18,12 +40,21 @@ export default class Plugin implements UMPlugin {
   store: PS<UMStorage>;
 
   private mine: IMine;
+  private spawnSaveData: WriteSaveObject;
 
   constructor(omegga: OL, config: PC<UMConfig>, store: PS<UMStorage>) {
     this.omegga = omegga;
     this.config = config;
     this.store = store;
     this.mine = new Mine(this, MINE_ORIGIN, MINE_WIDTH, MINE_HEIGHT);
+
+    this.spawnSaveData = OMEGGA_UTIL.brs.read(fs.readFileSync(SPAWN_SAVE_PATH));
+  }
+
+  async onStart() {
+    this.omegga.loadMinigame(MINIGAME_PRESET);
+    this.omegga.loadSaveData(this.spawnSaveData, { offZ: SPAWN_OFFSET_Z });
+    await this.mine.createMine();
   }
 
   async onLeave({ id }: OmeggaPlayer) {
@@ -121,9 +152,12 @@ export default class Plugin implements UMPlugin {
   }
 
   async init() {
-    // TODO: delete world plate
+    // Make minigame config visible to Omegga as a preset.
+    fs.mkdirSync(MINIGAME_PRESET_DIR, { recursive: true });
+    fs.copyFileSync(MINIGAME_CFG_SRC_PATH, MINIGAME_CFG_DEST_PATH);
 
     this.omegga
+      .on('start', this.onStart.bind(this))
       .on('leave', this.onLeave.bind(this))
       .on('cmd:createmine', this.onCmdCreateMine.bind(this))
       .on('cmd:clearmine', this.onCmdClearMine.bind(this))
