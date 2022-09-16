@@ -46,6 +46,7 @@ export const IronResource: IVoxelType = {
   name: 'Iron',
   dbName: 'iron',
   color: [165, 156, 148],
+  material: 'BMC_Metallic',
   hp: 30,
 };
 

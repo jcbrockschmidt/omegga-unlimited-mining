@@ -1,5 +1,12 @@
 import { ColorRgb } from '../../omegga';
 
+export type BrickMaterial =
+  | 'BMC_Plastic'
+  | 'BMC_Glass'
+  | 'BMC_Glow'
+  | 'BMC_Metallic'
+  | 'BMC_Hologram';
+
 /**
  * Describes a voxel's properties.
  */
@@ -14,10 +21,15 @@ export interface IVoxelType {
    */
   dbName: string;
 
-  /*
+  /**
    * Color of voxels in the world.
    */
   color: ColorRgb;
+
+  /**
+   * Material of voxels in the world.
+   */
+  material?: BrickMaterial;
 
   /**
    * How much power it takes to destroy a voxel. A negative HP indicates an

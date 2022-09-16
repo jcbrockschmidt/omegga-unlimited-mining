@@ -1,6 +1,20 @@
 import { Brick, Vector, WriteSaveObject } from 'omegga';
-import { IVoxelType } from './resources';
+import { BrickMaterial, IVoxelType } from './resources';
 import { IVoxel, IVoxelConfig, VoxelFace } from './voxel';
+
+const BRS_BRICK_MATERIALS: BrickMaterial[] = [
+  'BMC_Plastic',
+  'BMC_Glass',
+  'BMC_Glow',
+  'BMC_Metallic',
+  'BMC_Hologram',
+];
+
+const MATERIAL_TO_INDEX: Map<BrickMaterial, number> = new Map(
+  BRS_BRICK_MATERIALS.map((material, i) => [material, i])
+);
+
+const DEFAULT_MATERIAL_INDEX = MATERIAL_TO_INDEX['BMC_Plastic'];
 
 // TODO: documentation, maybe justify use
 export interface IVoxelManager {
@@ -64,6 +78,7 @@ export class VoxelManager implements IVoxelManager {
       ],
       brick_assets: [voxelConfig.brickAsset],
       bricks: [],
+      materials: BRS_BRICK_MATERIALS,
     };
   }
 
@@ -80,6 +95,10 @@ export class VoxelManager implements IVoxelManager {
       obscuredFaces,
     };
 
+    const materialIndex = type.material
+      ? MATERIAL_TO_INDEX.get(type.material)
+      : DEFAULT_MATERIAL_INDEX;
+
     const bricks: Brick[] = [
       {
         size: this.voxelConfig.brickSize,
@@ -92,6 +111,7 @@ export class VoxelManager implements IVoxelManager {
             ConsoleTag: this.voxelTag,
           },
         },
+        material_index: materialIndex,
       },
     ];
     await Omegga.loadSaveData(

@@ -5,6 +5,7 @@ import {
   BorderResource,
   StoneResource,
   QuartzResource,
+  IronResource,
 } from './resources';
 import { UMPlugin } from './types';
 import { IVoxel, VoxelFace, IVoxelConfig } from './voxel';
@@ -124,9 +125,12 @@ export class Mine implements IMine {
           this.realOrigin[2],
         ];
         // TODO: Replace this with a proper world generator
-        const resource = [DirtResource, StoneResource, QuartzResource][
-          Math.floor(Math.random() * 3)
-        ];
+        const resource = [
+          IronResource,
+          DirtResource,
+          StoneResource,
+          QuartzResource,
+        ][Math.floor(Math.random() * 4)];
         createVoxelPromises.push(
           this.voxelManager.createVoxel(voxelPosition, resource, obscuredFaces)
         );
