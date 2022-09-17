@@ -58,6 +58,9 @@ export interface IMine {
   hitVoxel(playerId: string, position: Vector): Promise<void>;
 }
 
+/**
+ * Basic mine.
+ */
 export class Mine implements IMine {
   private plugin: UMPlugin;
   private realOrigin: Vector;
@@ -84,16 +87,19 @@ export class Mine implements IMine {
     this.voxelConfig = DEFAULT_VOXEL_CONFIG;
     // TODO: make unique to this mine. Include uuid that we also use for the brick group?
     this.voxelTag = 'um:voxel';
-    this.voxelManager = new VoxelManager(this.voxelConfig, this.voxelTag);
+    this.voxelManager = new VoxelManager(
+      this.voxelConfig,
+      this.voxelTag,
+      this.realOrigin
+    );
 
-    const { brickSize } = this.voxelConfig;
     this.voxelFaceToOffset = {
-      [VoxelFace.PosX]: [brickSize[0] * 2, 0, 0],
-      [VoxelFace.NegX]: [-brickSize[0] * 2, 0, 0],
-      [VoxelFace.PosY]: [0, brickSize[1] * 2, 0],
-      [VoxelFace.NegY]: [0, -brickSize[1] * 2, 0],
-      [VoxelFace.PosZ]: [0, 0, brickSize[2] * 2],
-      [VoxelFace.NegZ]: [0, 0, -brickSize[2] * 2],
+      [VoxelFace.PosX]: [1, 0, 0],
+      [VoxelFace.NegX]: [-1, 0, 0],
+      [VoxelFace.PosY]: [0, 1, 0],
+      [VoxelFace.NegY]: [0, -1, 0],
+      [VoxelFace.PosZ]: [0, 0, 1],
+      [VoxelFace.NegZ]: [0, 0, -1],
     };
 
     this.mineIsCreated = false;
@@ -118,12 +124,7 @@ export class Mine implements IMine {
         else if (y === this.entranceLength - 1)
           obscuredFaces.add(VoxelFace.PosY);
 
-        const { brickSize } = this.voxelConfig;
-        const voxelPosition: Vector = [
-          this.realOrigin[0] + brickSize[0] * 2 * x,
-          this.realOrigin[1] + brickSize[1] * 2 * y,
-          this.realOrigin[2],
-        ];
+        const voxelPosition: Vector = [x, y, 0];
         // TODO: Replace this with a proper world generator
         const resource = [
           IronResource,
@@ -174,25 +175,29 @@ export class Mine implements IMine {
 
       playerData.displayMiningMessage(voxelData);
 
-      // TODO: refactor printing into PlayerMiner
       if (voxelData.hp <= 0) {
         await this.removeVoxel(position, voxelData);
+        playerData.addResource(voxelData.type, 1);
       }
-
-      playerData.addResource(voxelData.type, 1);
     } else {
       playerData.displayBorderMessage();
     }
   }
 
-  // TODO: doc
+  /**
+   * Initialized listeners for player interactions with voxels. Allows players
+   * to mine voxels from this mine.
+   */
   private initMiningMechanics(): void {
     const { brickType } = this.voxelConfig;
     this.eventListener = async ({ player, position, brick_name, message }) => {
       if (message !== this.voxelTag || brick_name !== brickType) return;
 
       try {
-        await this.hitVoxel(player.id, position);
+        await this.hitVoxel(
+          player.id,
+          this.voxelManager.vectorFromReal(position)
+        );
       } catch (e) {
         console.log(e);
       }
@@ -200,13 +205,16 @@ export class Mine implements IMine {
     this.plugin.omegga.on('interact', this.eventListener);
   }
 
-  // TODO: doc
-  private async removeVoxel(
-    position: Vector,
-    { obscuredFaces, type }: IVoxel
-  ): Promise<void> {
+  /**
+   * Removes a voxel and reveals any voxels it was obscuring.
+   *
+   * @param position Voxel position relative to the voxel manager.
+   * @param voxel Data for voxel being removed.
+   */
+  private async removeVoxel(position: Vector, voxel: IVoxel): Promise<void> {
+    const { obscuredFaces, type } = voxel;
+
     // Reveal new bricks on obscured faces.
-    const ceilingZ = this.realOrigin[2];
     const createVoxelPromises = [...obscuredFaces].map((face: VoxelFace) => {
       const offset = this.voxelFaceToOffset[face];
       const newPos: Vector = [
@@ -218,7 +226,6 @@ export class Mine implements IMine {
       // Determine which faces this new voxel has obscured.
       const faceCreatedFrom = VOXEL_FACE_TO_INVERT[face];
       const newObscuredFaces: Set<VoxelFace> = new Set();
-      // TODO: is there a cleaner way to iterate over enum values?
       [
         VoxelFace.PosX,
         VoxelFace.NegX,
@@ -229,7 +236,7 @@ export class Mine implements IMine {
       ].forEach(checkFace => {
         if (
           checkFace === faceCreatedFrom ||
-          (checkFace === VoxelFace.PosZ && newPos[2] >= ceilingZ)
+          (checkFace === VoxelFace.PosZ && newPos[2] >= 0)
         )
           return;
 
@@ -251,16 +258,13 @@ export class Mine implements IMine {
     });
 
     // Check if a ceiling border block should be placed.
-    const { brickSize } = this.voxelConfig;
-    const aboveCeiling = position[2] >= ceilingZ;
+    const aboveCeiling = position[2] >= 0;
     // Don't place a ceiling border in the mine entrance.
     const outsideEntrance =
-      position[0] < this.realOrigin[0] ||
-      position[0] >
-        this.realOrigin[0] + (this.entranceWidth - 1) * brickSize[0] * 2 ||
-      position[1] < this.realOrigin[1] ||
-      position[1] >
-        this.realOrigin[1] + (this.entranceLength - 1) * brickSize[1] * 2;
+      position[0] < 0 ||
+      position[0] >= this.entranceWidth ||
+      position[1] < 0 ||
+      position[1] >= this.entranceLength;
     if (aboveCeiling && outsideEntrance) {
       const borderOffset = this.voxelFaceToOffset[VoxelFace.PosZ];
       const borderPos: Vector = [

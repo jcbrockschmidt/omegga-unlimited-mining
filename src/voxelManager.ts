@@ -16,12 +16,18 @@ const MATERIAL_TO_INDEX: Map<BrickMaterial, number> = new Map(
 
 const DEFAULT_MATERIAL_INDEX = MATERIAL_TO_INDEX['BMC_Plastic'];
 
-// TODO: documentation, maybe justify use
+/**
+ * Manages voxel creation and deletion.
+ *
+ * Abstracts bricks into voxels. Uses a faux coordinate system for voxels where
+ * 1 voxel is 1 unit.
+ */
 export interface IVoxelManager {
   /**
-   * Create a voxel in the world.
+   * Create a voxel.
    *
-   * @param position Position of the voxel in the mine.
+   * @param position Position of the voxel relative to the voxel manager's
+   *   coordinate system.
    * @param type Properties for the voxel.
    * @param obscuredFaces Faces that have un-loaded voxels behind them.
    */
@@ -34,7 +40,8 @@ export interface IVoxelManager {
   /**
    * Delete a voxel given its position.
    *
-   * @param position Position of the voxel in the mine.
+   * @param position Position of the voxel relative to the voxel manager's
+   *   coordinate system.
    */
   deleteVoxel(position: Vector): Promise<void>;
 
@@ -44,27 +51,48 @@ export interface IVoxelManager {
   clearVoxels(): Promise<void>;
 
   /**
-   * Get a voxel given its position in the world.
+   * Get a voxel given its position.
    *
-   * @param position Position of the voxel in the world.
+   * @param position Position of the voxel relative to the voxel manager's
+   *   coordinate system.
    */
   getVoxel(position: Vector): IVoxel | undefined;
+
+  /**
+   * Convert real coordinates to the voxel manager's coordinate system.
+   */
+  vectorFromReal(realVector: Vector): Vector;
+
+  /**
+   * Convert coordinates from the voxel manager's coordinate system to the real
+   * coordinate system.
+   */
+  vectorToReal(vector: Vector): Vector;
 }
 
 let voxelManagerCount = 0;
 
-// TODO: doc
+/**
+ * Basic voxel manager.
+ */
 export class VoxelManager implements IVoxelManager {
   private voxelConfig: IVoxelConfig;
   private voxelTag: string;
+  private realOrigin: Vector;
   private idToVoxel: Map<string, IVoxel>;
   private brickOwnerId: string;
   private emptySaveData: WriteSaveObject;
 
-  // TODO: doc
-  constructor(voxelConfig: IVoxelConfig, voxelTag: string) {
+  /**
+   * @param voxelConfig Describes the brick properties of voxels.
+   * @param voxelTag Tag used for voxel interaction events.
+   * @param realOrigin Position of (0, 0, 0) for the voxel manager's coordinate
+   *   system in the real coordinate space.
+   */
+  constructor(voxelConfig: IVoxelConfig, voxelTag: string, realOrigin: Vector) {
     this.voxelConfig = voxelConfig;
     this.voxelTag = voxelTag;
+    this.realOrigin = [...realOrigin];
     this.idToVoxel = new Map();
 
     this.brickOwnerId = OMEGGA_UTIL.uuid.random();
@@ -102,7 +130,7 @@ export class VoxelManager implements IVoxelManager {
     const bricks: Brick[] = [
       {
         size: this.voxelConfig.brickSize,
-        position: position,
+        position: this.vectorToReal(position),
         color,
         components: {
           BCD_Interact: {
@@ -131,7 +159,7 @@ export class VoxelManager implements IVoxelManager {
     if (!this.idToVoxel.has(id)) return;
 
     const brickRegion = {
-      center: position,
+      center: this.vectorToReal(position),
       extent: this.voxelConfig.brickSize,
     };
     Omegga.clearRegion(brickRegion);
@@ -149,10 +177,29 @@ export class VoxelManager implements IVoxelManager {
     return this.idToVoxel.get(id);
   }
 
+  vectorFromReal(realVector: Vector): Vector {
+    const { brickSize } = this.voxelConfig;
+    return [
+      (realVector[0] - this.realOrigin[0]) / (brickSize[0] * 2),
+      (realVector[1] - this.realOrigin[1]) / (brickSize[1] * 2),
+      (realVector[2] - this.realOrigin[2]) / (brickSize[2] * 2),
+    ];
+  }
+
+  vectorToReal(vector: Vector): Vector {
+    const { brickSize } = this.voxelConfig;
+    return [
+      vector[0] * (brickSize[0] * 2) + this.realOrigin[0],
+      vector[1] * (brickSize[1] * 2) + this.realOrigin[1],
+      vector[2] * (brickSize[2] * 2) + this.realOrigin[2],
+    ];
+  }
+
   /**
    * Returns a unique ID for a voxel given its position in the mine.
    *
-   * @param position Position of the voxel in the mine.
+   * @param position Position of the voxel relative to the voxel manager's
+   *   coordinate system
    */
   private getVoxelId(position: Vector): string {
     return position.toString();
