@@ -6,26 +6,32 @@
   "commands": [
     {
       "name": "/ResetMine",
-      "description": "Resets the mine",
+      "description": "Resets the mine.",
       "example": "/ResetMine",
       "args": []
     },
     {
       "name": "/Inventory",
-      "description": "Displays your inventory",
+      "description": "Displays your inventory.",
       "example": "/Inventory",
       "args": []
     },
     {
       "name": "/Inv",
-      "description": "Displays your inventory",
+      "description": "Displays your inventory.",
       "example": "/Inv",
       "args": []
     },
     {
       "name": "/Stats",
-      "description": "Displays your stats (money, pick level, etc.)",
+      "description": "Displays your stats, such as money and pick level.",
       "example": "/Stats",
+      "args": []
+    },
+    {
+      "name": "/Hub",
+      "description": "Teleports the user to the spawn area.",
+      "example": "/Hub",
       "args": []
     }
   ]

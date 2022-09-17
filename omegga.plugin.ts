@@ -28,6 +28,11 @@ const MINE_HEIGHT = 20;
 const MINIGAME_PRESET = 'unlimited-mining';
 const MINIGAME_CFG_PATH = path.resolve(__dirname, '../data/minigame.bp');
 
+// Location and orientation to TP players to when they use /Hub.
+const HUB_TP_POS: Vector = [-100, -735.5, 115 + SPAWN_OFFSET_Z];
+const HUB_TP_PITCH = 0;
+const HUB_TP_YAW = 90;
+
 export default class Plugin implements UMPlugin {
   omegga: OL;
   config: PC<UMConfig>;
@@ -121,6 +126,13 @@ export default class Plugin implements UMPlugin {
     }
   }
 
+  async onCmdHub(playerName: string) {
+    const posArgs = HUB_TP_POS.join(' ');
+    Omegga.writeln(
+      `Chat.Command /TP ${playerName} ${posArgs} ${HUB_TP_PITCH} ${HUB_TP_YAW} 0`
+    );
+  }
+
   async init() {
     // Make minigame config visible to Omegga as a preset.
     if (fs.existsSync(this.minigamePresetPath)) {
@@ -138,12 +150,13 @@ export default class Plugin implements UMPlugin {
       .on('cmd:resetmine', this.onCmdResetMine.bind(this))
       .on('cmd:inventory', this.onCmdInventory.bind(this))
       .on('cmd:inv', this.onCmdInventory.bind(this))
-      .on('cmd:stats', this.onCmdStats.bind(this));
+      .on('cmd:stats', this.onCmdStats.bind(this))
+      .on('cmd:hub', this.onCmdHub.bind(this));
 
     this.stationManager.init();
 
     return {
-      registeredCommands: ['resetmine', 'inventory', 'inv', 'stats'],
+      registeredCommands: ['resetmine', 'inventory', 'inv', 'stats', 'hub'],
     };
   }
 
@@ -157,7 +170,7 @@ export default class Plugin implements UMPlugin {
       .removeAllListeners('cmd:inventory')
       .removeAllListeners('cmd:inv')
       .removeAllListeners('cmd:stats')
-      .removeAllListeners('cmd:sellall');
+      .removeAllListeners('cmd:hub');
 
     if (this.mine.isCreated()) {
       await this.mine.clearMine();
