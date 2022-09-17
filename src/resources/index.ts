@@ -8,7 +8,7 @@ export type BrickMaterial =
   | 'BMC_Hologram';
 
 /**
- * Describes a voxel's properties.
+ * Describes a type of voxel.
  */
 export interface IVoxelType {
   /**

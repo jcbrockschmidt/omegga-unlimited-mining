@@ -11,7 +11,6 @@ import { UMPlugin } from './types';
 import { IVoxel, VoxelFace, IVoxelConfig } from './voxel';
 import { VoxelManager, VoxelsBlueprint } from './voxelManager';
 
-// TODO: pass into class via constructor
 const DEFAULT_VOXEL_CONFIG: IVoxelConfig = {
   brickType: '20x Micro-Brick Cube',
   brickAsset: 'PB_DefaultMicroBrick',
