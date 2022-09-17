@@ -58,6 +58,8 @@ export interface IMine {
   hitVoxel(playerId: string, position: Vector): Promise<void>;
 }
 
+let mineCount = 0;
+
 /**
  * Basic mine.
  */
@@ -85,8 +87,7 @@ export class Mine implements IMine {
     this.entranceWidth = width;
     this.entranceLength = length;
     this.voxelConfig = DEFAULT_VOXEL_CONFIG;
-    // TODO: make unique to this mine. Include uuid that we also use for the brick group?
-    this.voxelTag = 'um:voxel';
+    this.voxelTag = `um:voxel:${mineCount++}`;
     this.voxelManager = new VoxelManager(
       this.voxelConfig,
       this.voxelTag,
