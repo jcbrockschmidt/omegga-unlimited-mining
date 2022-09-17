@@ -17,6 +17,29 @@ const MATERIAL_TO_INDEX: Map<BrickMaterial, number> = new Map(
 const DEFAULT_MATERIAL_INDEX = MATERIAL_TO_INDEX['BMC_Plastic'];
 
 /**
+ * Describes a voxel not yet created.
+ */
+export interface IVoxelBlueprint {
+  /**
+   * Position of the voxel relative to the voxel manager's coordinate system.
+   */
+  position: Vector;
+  /**
+   * Properties of the voxel.
+   */
+  type: IVoxelType;
+  /**
+   * Faces that have unloaded/unrendered voxels behind them.
+   */
+  obscuredFaces: Set<VoxelFace>;
+}
+
+/**
+ * Describes a collection of voxels not yet created.
+ */
+export type VoxelsBlueprint = IVoxelBlueprint[];
+
+/**
  * Manages voxel creation and deletion.
  *
  * Abstracts bricks into voxels. Uses a faux coordinate system for voxels where
@@ -26,16 +49,9 @@ export interface IVoxelManager {
   /**
    * Create a voxel.
    *
-   * @param position Position of the voxel relative to the voxel manager's
-   *   coordinate system.
-   * @param type Properties for the voxel.
-   * @param obscuredFaces Faces that have un-loaded voxels behind them.
+   * @param voxels Describes voxels to be created.
    */
-  createVoxel(
-    position: Vector,
-    type: IVoxelType,
-    obscuredFaces: Set<VoxelFace>
-  ): Promise<void>;
+  createVoxels(voxels: VoxelsBlueprint): Promise<void>;
 
   /**
    * Delete a voxel given its position.
@@ -110,25 +126,27 @@ export class VoxelManager implements IVoxelManager {
     };
   }
 
-  async createVoxel(
-    position: Vector,
-    type: IVoxelType,
-    obscuredFaces: Set<VoxelFace>
-  ): Promise<void> {
-    const { color, hp } = type;
+  async createVoxels(voxels: VoxelsBlueprint): Promise<void> {
+    const bricks: Brick[] = [];
 
-    const voxel: IVoxel = {
-      type,
-      hp,
-      obscuredFaces,
-    };
+    voxels.forEach((voxelBlueprint: IVoxelBlueprint) => {
+      const { position, type, obscuredFaces } = voxelBlueprint;
+      const { color, hp } = type;
 
-    const materialIndex = type.material
-      ? MATERIAL_TO_INDEX.get(type.material)
-      : DEFAULT_MATERIAL_INDEX;
+      const voxel: IVoxel = {
+        type,
+        hp,
+        obscuredFaces,
+      };
 
-    const bricks: Brick[] = [
-      {
+      const materialIndex = type.material
+        ? MATERIAL_TO_INDEX.get(type.material)
+        : DEFAULT_MATERIAL_INDEX;
+
+      const id = this.getVoxelId(position);
+      this.idToVoxel.set(id, voxel);
+
+      bricks.push({
         size: this.voxelConfig.brickSize,
         position: this.vectorToReal(position),
         color,
@@ -140,18 +158,18 @@ export class VoxelManager implements IVoxelManager {
           },
         },
         material_index: materialIndex,
-      },
-    ];
-    await Omegga.loadSaveData(
-      {
-        ...this.emptySaveData,
-        bricks: bricks,
-      },
-      { quiet: true }
-    );
+      });
+    });
 
-    const id = this.getVoxelId(position);
-    this.idToVoxel.set(id, voxel);
+    if (bricks.length > 0) {
+      await Omegga.loadSaveData(
+        {
+          ...this.emptySaveData,
+          bricks: bricks,
+        },
+        { quiet: true }
+      );
+    }
   }
 
   async deleteVoxel(position: Vector): Promise<void> {

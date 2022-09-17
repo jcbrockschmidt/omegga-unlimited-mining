@@ -9,7 +9,7 @@ import {
 } from './resources';
 import { UMPlugin } from './types';
 import { IVoxel, VoxelFace, IVoxelConfig } from './voxel';
-import { VoxelManager } from './voxelManager';
+import { VoxelManager, VoxelsBlueprint } from './voxelManager';
 
 // TODO: pass into class via constructor
 const DEFAULT_VOXEL_CONFIG: IVoxelConfig = {
@@ -113,7 +113,8 @@ export class Mine implements IMine {
 
     this.initMiningMechanics();
 
-    const createVoxelPromises = [];
+    // Create voxels at the entrance to the mine.
+    const blueprint: VoxelsBlueprint = [];
     for (let x = 0; x < this.entranceWidth; x++) {
       for (let y = 0; y < this.entranceLength; y++) {
         const obscuredFaces: Set<VoxelFace> = new Set([VoxelFace.NegZ]);
@@ -124,20 +125,23 @@ export class Mine implements IMine {
         else if (y === this.entranceLength - 1)
           obscuredFaces.add(VoxelFace.PosY);
 
-        const voxelPosition: Vector = [x, y, 0];
-        // TODO: Replace this with a proper world generator
-        const resource = [
+        const position: Vector = [x, y, 0];
+        // TODO: Determine type using a world generator
+        const type = [
           IronResource,
           DirtResource,
           StoneResource,
           QuartzResource,
         ][Math.floor(Math.random() * 4)];
-        createVoxelPromises.push(
-          this.voxelManager.createVoxel(voxelPosition, resource, obscuredFaces)
-        );
+
+        blueprint.push({
+          position,
+          type,
+          obscuredFaces,
+        });
       }
     }
-    await Promise.all(createVoxelPromises);
+    await this.voxelManager.createVoxels(blueprint);
 
     this.mineIsCreated = true;
   }
@@ -215,47 +219,55 @@ export class Mine implements IMine {
     const { obscuredFaces, type } = voxel;
 
     // Reveal new bricks on obscured faces.
-    const createVoxelPromises = [...obscuredFaces].map((face: VoxelFace) => {
-      const offset = this.voxelFaceToOffset[face];
-      const newPos: Vector = [
-        position[0] + offset[0],
-        position[1] + offset[1],
-        position[2] + offset[2],
-      ];
-
-      // Determine which faces this new voxel has obscured.
-      const faceCreatedFrom = VOXEL_FACE_TO_INVERT[face];
-      const newObscuredFaces: Set<VoxelFace> = new Set();
-      [
-        VoxelFace.PosX,
-        VoxelFace.NegX,
-        VoxelFace.PosY,
-        VoxelFace.NegY,
-        VoxelFace.PosZ,
-        VoxelFace.NegZ,
-      ].forEach(checkFace => {
-        if (
-          checkFace === faceCreatedFrom ||
-          (checkFace === VoxelFace.PosZ && newPos[2] >= 0)
-        )
-          return;
-
-        const checkOffset = this.voxelFaceToOffset[checkFace];
-        const checkPos: Vector = [
-          newPos[0] + checkOffset[0],
-          newPos[1] + checkOffset[1],
-          newPos[2] + checkOffset[2],
+    const blueprint: VoxelsBlueprint = [...obscuredFaces].map(
+      (face: VoxelFace) => {
+        const offset = this.voxelFaceToOffset[face];
+        const newPos: Vector = [
+          position[0] + offset[0],
+          position[1] + offset[1],
+          position[2] + offset[2],
         ];
-        const neighborVoxel = this.voxelManager.getVoxel(checkPos);
-        if (neighborVoxel) {
-          const oppositeFace = VOXEL_FACE_TO_INVERT[checkFace];
-          neighborVoxel.obscuredFaces.delete(oppositeFace);
-        } else {
-          newObscuredFaces.add(checkFace);
-        }
-      });
-      return this.voxelManager.createVoxel(newPos, type, newObscuredFaces);
-    });
+
+        // Determine which faces this new voxel has obscured.
+        const faceCreatedFrom = VOXEL_FACE_TO_INVERT[face];
+        const newObscuredFaces: Set<VoxelFace> = new Set();
+        [
+          VoxelFace.PosX,
+          VoxelFace.NegX,
+          VoxelFace.PosY,
+          VoxelFace.NegY,
+          VoxelFace.PosZ,
+          VoxelFace.NegZ,
+        ].forEach(checkFace => {
+          if (
+            checkFace === faceCreatedFrom ||
+            (checkFace === VoxelFace.PosZ && newPos[2] >= 0)
+          )
+            return;
+
+          const checkOffset = this.voxelFaceToOffset[checkFace];
+          const checkPos: Vector = [
+            newPos[0] + checkOffset[0],
+            newPos[1] + checkOffset[1],
+            newPos[2] + checkOffset[2],
+          ];
+          const neighborVoxel = this.voxelManager.getVoxel(checkPos);
+          if (neighborVoxel) {
+            const oppositeFace = VOXEL_FACE_TO_INVERT[checkFace];
+            neighborVoxel.obscuredFaces.delete(oppositeFace);
+          } else {
+            newObscuredFaces.add(checkFace);
+          }
+        });
+
+        // TODO: Determine type using a world generator
+        return {
+          position: newPos,
+          type,
+          obscuredFaces: newObscuredFaces,
+        };
+      }
+    );
 
     // Check if a ceiling border block should be placed.
     const aboveCeiling = position[2] >= 0;
@@ -274,12 +286,16 @@ export class Mine implements IMine {
       ];
       // We do not include obscured faces for border voxels since we don't
       // expect them to ever be deleted, except during a reset.
-      createVoxelPromises.push(
-        this.voxelManager.createVoxel(borderPos, BorderResource, new Set())
-      );
+      blueprint.push({
+        position: borderPos,
+        type: BorderResource,
+        obscuredFaces: new Set(),
+      });
     }
 
-    await Promise.all(createVoxelPromises);
+    if (blueprint.length > 0) {
+      await this.voxelManager.createVoxels(blueprint);
+    }
 
     // Delete mined voxel.
     // We want to delete voxels after we've placed the new voxels so
