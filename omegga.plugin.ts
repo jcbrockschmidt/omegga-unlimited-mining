@@ -2,6 +2,7 @@ import fs from 'fs';
 import { OL, PS, PC, Vector, OmeggaPlayer, WriteSaveObject } from 'omegga';
 import path from 'path';
 import {
+  displayHelp,
   IMine,
   IStationManager,
   Mine,
@@ -29,7 +30,7 @@ const MINIGAME_PRESET = 'unlimited-mining';
 const MINIGAME_CFG_PATH = path.resolve(__dirname, '../data/minigame.bp');
 
 // Location and orientation to TP players to when they use /Hub.
-const HUB_TP_POS: Vector = [-100, -735.5, 115 + SPAWN_OFFSET_Z];
+const HUB_TP_POS: Vector = [-84, -730.5, 115 + SPAWN_OFFSET_Z];
 const HUB_TP_PITCH = 0;
 const HUB_TP_YAW = 90;
 
@@ -61,7 +62,7 @@ export default class Plugin implements UMPlugin {
     );
   }
 
-  checkCmdAdmin(playerName: string): boolean {
+  private checkCmdAdmin(playerName: string): boolean {
     const player = this.omegga.getPlayer(playerName);
     if (!player.getRoles().includes('Admin')) {
       this.omegga.whisper(
@@ -82,6 +83,14 @@ export default class Plugin implements UMPlugin {
   async onLeave({ id }: OmeggaPlayer) {
     try {
       await PlayerDataManager.savePlayerData(this, id);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async onCmdMiningHelp(playerName: string) {
+    try {
+      displayHelp(playerName);
     } catch (e) {
       console.log(e);
     }
@@ -131,6 +140,10 @@ export default class Plugin implements UMPlugin {
     Omegga.writeln(
       `Chat.Command /TP ${playerName} ${posArgs} ${HUB_TP_PITCH} ${HUB_TP_YAW} 0`
     );
+    Omegga.middlePrint(
+      playerName,
+      `<size="40"><b>TELEPORTED</></>` + '<br>' + `<size="30">TO SPAWN</>`
+    );
   }
 
   async init() {
@@ -147,6 +160,7 @@ export default class Plugin implements UMPlugin {
     this.omegga
       .once('start', this.onStart.bind(this))
       .on('leave', this.onLeave.bind(this))
+      .on('cmd:mininghelp', this.onCmdMiningHelp.bind(this))
       .on('cmd:resetmine', this.onCmdResetMine.bind(this))
       .on('cmd:inventory', this.onCmdInventory.bind(this))
       .on('cmd:inv', this.onCmdInventory.bind(this))
@@ -156,7 +170,14 @@ export default class Plugin implements UMPlugin {
     this.stationManager.init();
 
     return {
-      registeredCommands: ['resetmine', 'inventory', 'inv', 'stats', 'hub'],
+      registeredCommands: [
+        'mininghelp',
+        'resetmine',
+        'inventory',
+        'inv',
+        'stats',
+        'hub',
+      ],
     };
   }
 
@@ -166,6 +187,7 @@ export default class Plugin implements UMPlugin {
     await PlayerDataManager.saveAllPlayerData();
 
     this.omegga
+      .removeAllListeners('cmd:mininghelp')
       .removeAllListeners('cmd:resetmine')
       .removeAllListeners('cmd:inventory')
       .removeAllListeners('cmd:inv')

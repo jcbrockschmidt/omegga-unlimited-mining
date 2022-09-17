@@ -5,6 +5,12 @@
   "config": {},
   "commands": [
     {
+      "name": "/MiningHelp",
+      "description": "Display help for the Unlimited Mining gamemode.",
+      "example": "/MiningHelp",
+      "args": []
+    },
+    {
       "name": "/ResetMine",
       "description": "Resets the mine.",
       "example": "/ResetMine",

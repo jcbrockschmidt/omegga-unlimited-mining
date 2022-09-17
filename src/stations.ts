@@ -1,13 +1,13 @@
 import { BrickInteraction } from 'omegga';
 import { IExpiringSet, TimedExpiringSet } from './expiringSet';
 import { formatMoney } from './formatting';
+import { displayHelp } from './help';
 import { PlayerDataManager } from './playerData';
 import { UMPlugin } from './types';
 
+const HELP_TAG = 'um:help';
 const SELL_ALL_TAG = 'um:sellall';
 const UPGRADE_TAG = 'um:upgradepick';
-
-// TODO: refactor more from omegga.plugin.ts into here
 
 export interface IStationManager {
   init(): void;
@@ -26,6 +26,10 @@ export class StationManager {
     // Players have 5 seconds to confirm station interactions.
     this.sellWaitingConfirm = new TimedExpiringSet(5000);
     this.upgradeWaitingConfirm = new TimedExpiringSet(5000);
+  }
+
+  private async handleHelp(playerId: string) {
+    displayHelp(playerId);
   }
 
   private async handleSellAll(playerId: string) {
@@ -89,7 +93,7 @@ export class StationManager {
         playerId,
         '<size="40"><b><u>CANNOT UPGRADE</></></>' +
           '<br>' +
-          `<size="30">NEED ${formatMoney(diff)}</>`
+          `<size="30">NEED ${formatMoney(diff)} MORE</>`
       );
       return;
     }
@@ -132,6 +136,9 @@ export class StationManager {
   init(): void {
     this.eventListener = async ({ player, message }) => {
       switch (message) {
+        case HELP_TAG:
+          this.handleHelp(player.id);
+          break;
         case SELL_ALL_TAG:
           await this.handleSellAll(player.id);
           break;
