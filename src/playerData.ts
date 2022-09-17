@@ -40,6 +40,8 @@ interface IPlayerDataAdapter extends IPlayerData {
   save(): Promise<void>;
 }
 
+export class NotEnoughMoneyError extends Error {}
+
 const allAdapters: Map<string, IPlayerDataAdapter> = new Map();
 
 class PlayerDataAdapter implements IPlayerDataAdapter {
@@ -198,8 +200,7 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
   upgradePick(): number {
     const upgradeCost = this.pickaxe.getUpgradeCost();
     if (upgradeCost > this.money) {
-      // TODO: create error type
-      throw new Error('Not enough money to upgrade pickaxe');
+      throw new NotEnoughMoneyError('Not enough money to upgrade pickaxe');
     }
 
     const newLevel = this.pickaxe.upgrade();

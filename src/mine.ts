@@ -26,6 +26,10 @@ const VOXEL_FACE_TO_INVERT: Record<VoxelFace, VoxelFace> = {
   [VoxelFace.NegZ]: VoxelFace.PosZ,
 };
 
+export class MineAlreadyCreatedError extends Error {}
+export class MineNotCreatedError extends Error {}
+export class VoxelNotFoundError extends Error {}
+
 /**
  * Handles blocks generation and mining for a mine.
  */
@@ -107,8 +111,7 @@ export class Mine implements IMine {
 
   async createMine(): Promise<void> {
     if (this.mineIsCreated) {
-      // TODO: create error type
-      throw new Error('The mine is already created');
+      throw new MineAlreadyCreatedError();
     }
 
     this.initMiningMechanics();
@@ -148,8 +151,7 @@ export class Mine implements IMine {
 
   async clearMine(): Promise<void> {
     if (!this.mineIsCreated) {
-      // TODO: create error type
-      throw new Error('There is no mine to clear');
+      throw new MineNotCreatedError();
     }
     this.voxelManager.clearVoxels();
     this.plugin.omegga.removeListener('interact', this.eventListener);
@@ -169,8 +171,7 @@ export class Mine implements IMine {
 
     const voxelData = this.voxelManager.getVoxel(position);
     if (!voxelData) {
-      // TODO: create error type
-      throw new Error(`Missing data for voxel at ${position}`);
+      throw new VoxelNotFoundError(`Missing data for voxel at ${position}`);
     }
 
     if (voxelData.hp >= 0) {

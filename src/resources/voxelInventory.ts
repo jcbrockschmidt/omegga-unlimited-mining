@@ -13,6 +13,8 @@ export interface IVoxelInventory {
   toDb(): VoxelInventoryDb;
 }
 
+export class VoxelAmountNegativeError extends Error {}
+
 const DB_NAME_TO_VOXEL_TYPE: Map<string, IVoxelType> = new Map(
   Object.values(allResources).map((voxelType: IVoxelType) => [
     voxelType.dbName,
@@ -40,8 +42,7 @@ export class VoxelInventory implements IVoxelInventory {
 
   set(type: IVoxelType, amount: number): void {
     if (amount < 0) {
-      // TODO: create error type
-      throw new Error('Voxel amount cannot be negative');
+      throw new VoxelAmountNegativeError('Voxel amount cannot be negative');
     } else if (amount === 0) {
       this.inv.delete(type);
     } else {
@@ -51,8 +52,7 @@ export class VoxelInventory implements IVoxelInventory {
 
   add(type: IVoxelType, amount: number): number {
     if (amount < 0) {
-      // TODO: create error type
-      throw new Error('Voxel amount cannot be negative');
+      throw new VoxelAmountNegativeError('Voxel amount cannot be negative');
     }
     const newAmount = this.get(type) + amount;
     this.set(type, newAmount);
