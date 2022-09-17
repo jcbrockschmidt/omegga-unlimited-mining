@@ -18,5 +18,5 @@ const HELP_LINES = [
  * @param player Player to display help to.
  */
 export function displayHelp(player: string | OmeggaPlayer): void {
-  Omegga.whisper(player, ...HELP_LINES); // DEBUG
+  Omegga.whisper(player, ...HELP_LINES);
 }
