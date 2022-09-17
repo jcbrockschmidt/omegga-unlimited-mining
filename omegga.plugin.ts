@@ -123,7 +123,13 @@ export default class Plugin implements UMPlugin {
 
   async init() {
     // Make minigame config visible to Omegga as a preset.
-    fs.mkdirSync(path.parse(this.minigamePresetPath).dir, { recursive: true });
+    if (fs.existsSync(this.minigamePresetPath)) {
+      fs.unlinkSync(this.minigamePresetPath);
+    } else {
+      fs.mkdirSync(path.parse(this.minigamePresetPath).dir, {
+        recursive: true,
+      });
+    }
     fs.symlinkSync(MINIGAME_CFG_PATH, this.minigamePresetPath);
 
     this.omegga
