@@ -1,15 +1,10 @@
 import { PlayerDataManager } from './playerData';
 import { BrickInteraction, Vector } from '../omegga';
-import {
-  DirtResource,
-  BorderResource,
-  StoneResource,
-  QuartzResource,
-  IronResource,
-} from './resources';
+import { BorderResource } from './resources';
 import { UMPlugin } from './types';
 import { IVoxel, VoxelFace, IVoxelConfig } from './voxel';
 import { VoxelManager, VoxelsBlueprint } from './voxelManager';
+import { BasicWorldGenerator, IWorldGenerator } from './worldGeneration';
 
 const DEFAULT_VOXEL_CONFIG: IVoxelConfig = {
   brickType: '20x Micro-Brick Cube',
@@ -24,6 +19,15 @@ const VOXEL_FACE_TO_INVERT: Record<VoxelFace, VoxelFace> = {
   [VoxelFace.NegY]: VoxelFace.PosY,
   [VoxelFace.PosZ]: VoxelFace.NegZ,
   [VoxelFace.NegZ]: VoxelFace.PosZ,
+};
+
+const VOXEL_FACE_TO_OFFSET: Record<VoxelFace, Vector> = {
+  [VoxelFace.PosX]: [1, 0, 0],
+  [VoxelFace.NegX]: [-1, 0, 0],
+  [VoxelFace.PosY]: [0, 1, 0],
+  [VoxelFace.NegY]: [0, -1, 0],
+  [VoxelFace.PosZ]: [0, 0, 1],
+  [VoxelFace.NegZ]: [0, 0, -1],
 };
 
 export class MineAlreadyCreatedError extends Error {}
@@ -71,11 +75,11 @@ export class Mine implements IMine {
   private realOrigin: Vector;
   private entranceWidth: number;
   private entranceLength: number;
-  private voxelManager: VoxelManager;
   private voxelTag: string;
   private voxelConfig: IVoxelConfig;
+  private voxelManager: VoxelManager;
+  private worldGen: IWorldGenerator;
   private eventListener?: (args: BrickInteraction) => void;
-  private voxelFaceToOffset: Record<VoxelFace, Vector>;
   private mineIsCreated: boolean;
 
   /**
@@ -96,15 +100,7 @@ export class Mine implements IMine {
       this.voxelTag,
       this.realOrigin
     );
-
-    this.voxelFaceToOffset = {
-      [VoxelFace.PosX]: [1, 0, 0],
-      [VoxelFace.NegX]: [-1, 0, 0],
-      [VoxelFace.PosY]: [0, 1, 0],
-      [VoxelFace.NegY]: [0, -1, 0],
-      [VoxelFace.PosZ]: [0, 0, 1],
-      [VoxelFace.NegZ]: [0, 0, -1],
-    };
+    this.worldGen = new BasicWorldGenerator();
 
     this.mineIsCreated = false;
   }
@@ -129,17 +125,10 @@ export class Mine implements IMine {
           obscuredFaces.add(VoxelFace.PosY);
 
         const position: Vector = [x, y, 0];
-        // TODO: Determine type using a world generator
-        const type = [
-          IronResource,
-          DirtResource,
-          StoneResource,
-          QuartzResource,
-        ][Math.floor(Math.random() * 4)];
 
         blueprint.push({
           position,
-          type,
+          type: this.worldGen.getVoxelType(position),
           obscuredFaces,
         });
       }
@@ -217,12 +206,12 @@ export class Mine implements IMine {
    * @param voxel Data for voxel being removed.
    */
   private async removeVoxel(position: Vector, voxel: IVoxel): Promise<void> {
-    const { obscuredFaces, type } = voxel;
+    const { obscuredFaces } = voxel;
 
     // Reveal new bricks on obscured faces.
     const blueprint: VoxelsBlueprint = [...obscuredFaces].map(
       (face: VoxelFace) => {
-        const offset = this.voxelFaceToOffset[face];
+        const offset = VOXEL_FACE_TO_OFFSET[face];
         const newPos: Vector = [
           position[0] + offset[0],
           position[1] + offset[1],
@@ -246,7 +235,7 @@ export class Mine implements IMine {
           )
             return;
 
-          const checkOffset = this.voxelFaceToOffset[checkFace];
+          const checkOffset = VOXEL_FACE_TO_OFFSET[checkFace];
           const checkPos: Vector = [
             newPos[0] + checkOffset[0],
             newPos[1] + checkOffset[1],
@@ -261,10 +250,9 @@ export class Mine implements IMine {
           }
         });
 
-        // TODO: Determine type using a world generator
         return {
           position: newPos,
-          type,
+          type: this.worldGen.getVoxelType(newPos),
           obscuredFaces: newObscuredFaces,
         };
       }
@@ -279,7 +267,7 @@ export class Mine implements IMine {
       position[1] < 0 ||
       position[1] >= this.entranceLength;
     if (aboveCeiling && outsideEntrance) {
-      const borderOffset = this.voxelFaceToOffset[VoxelFace.PosZ];
+      const borderOffset = VOXEL_FACE_TO_OFFSET[VoxelFace.PosZ];
       const borderPos: Vector = [
         position[0] + borderOffset[0],
         position[1] + borderOffset[1],

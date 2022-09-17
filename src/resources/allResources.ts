@@ -7,19 +7,58 @@ export const BorderResource: IVoxelType = {
   hp: -1,
 };
 
+// Filler resources
+
 export const DirtResource: IVoxelType = {
   name: 'Dirt',
   dbName: 'dirt',
+  color: [90, 79, 45],
+  hp: 3,
+};
+
+export const PackedDirtResource: IVoxelType = {
+  name: 'Packed Dirt',
+  dbName: 'packed_dirt',
   color: [51, 45, 26],
-  hp: 2,
+  hp: 5,
+};
+
+export const ClayResource: IVoxelType = {
+  name: 'Clay',
+  dbName: 'clay',
+  color: [213, 163, 114],
+  hp: 10,
+};
+
+export const ShaleResource: IVoxelType = {
+  name: 'Shale',
+  dbName: 'shale',
+  color: [89, 106, 130],
+  hp: 20,
 };
 
 export const StoneResource: IVoxelType = {
   name: 'Stone',
   dbName: 'stone',
   color: [145, 142, 133],
-  hp: 5,
+  hp: 35,
 };
+
+export const BedrockResource: IVoxelType = {
+  name: 'Bedrock',
+  dbName: 'bedrock',
+  color: [120, 115, 110],
+  hp: 50,
+};
+
+export const BasaltResource: IVoxelType = {
+  name: 'Basalt',
+  dbName: 'basalt',
+  color: [76, 74, 74],
+  hp: 100,
+};
+
+// Other resources
 
 export const QuartzResource: IVoxelType = {
   name: 'Quartz',
