@@ -36,7 +36,7 @@
 			"playerRespawnTime": 1,
 			"teamSpawnMode": "UseAllSpawnBricks",
 			"teamHealthMultiplier": 1,
-			"teamSpeedMultiplier": 1,
+			"teamSpeedMultiplier": 2,
 			"teamJumpHeightMultiplier": 1,
 			"bTeamCollision": false,
 			"bTeamCanStack": false,
