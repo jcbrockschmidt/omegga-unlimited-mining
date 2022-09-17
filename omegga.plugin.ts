@@ -34,8 +34,11 @@ export default class Plugin implements UMPlugin {
   store: PS<UMStorage>;
 
   private mine: IMine;
-  private spawnSaveData: WriteSaveObject;
   private stationManager: IStationManager;
+  // Save data for the main HUB/spawn area.
+  private spawnSaveData: WriteSaveObject;
+  // Path where the minigame preset/config for this gamemode should be placed.
+  private minigamePresetPath: string;
 
   constructor(omegga: OL, config: PC<UMConfig>, store: PS<UMStorage>) {
     this.omegga = omegga;
@@ -45,6 +48,12 @@ export default class Plugin implements UMPlugin {
     this.stationManager = new StationManager(this);
 
     this.spawnSaveData = OMEGGA_UTIL.brs.read(fs.readFileSync(SPAWN_SAVE_PATH));
+
+    this.minigamePresetPath = path.resolve(
+      this.omegga.presetPath,
+      'Minigame',
+      `${MINIGAME_PRESET}.bp`
+    );
   }
 
   checkCmdAdmin(playerName: string): boolean {
@@ -114,13 +123,8 @@ export default class Plugin implements UMPlugin {
 
   async init() {
     // Make minigame config visible to Omegga as a preset.
-    const minigamePresetDir = path.resolve(this.omegga.presetPath, 'Minigame');
-    fs.mkdirSync(minigamePresetDir, { recursive: true });
-    const minigameCopyPath = path.resolve(
-      minigamePresetDir,
-      `${MINIGAME_PRESET}.bp`
-    );
-    fs.copyFileSync(MINIGAME_CFG_PATH, minigameCopyPath);
+    fs.mkdirSync(path.parse(this.minigamePresetPath).dir, { recursive: true });
+    fs.symlinkSync(MINIGAME_CFG_PATH, this.minigamePresetPath);
 
     this.omegga
       .once('start', this.onStart.bind(this))
@@ -151,6 +155,10 @@ export default class Plugin implements UMPlugin {
 
     if (this.mine.isCreated()) {
       await this.mine.clearMine();
+    }
+
+    if (fs.existsSync(this.minigamePresetPath)) {
+      fs.unlinkSync(this.minigamePresetPath);
     }
   }
 }
