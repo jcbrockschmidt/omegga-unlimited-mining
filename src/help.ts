@@ -8,8 +8,9 @@ const HELP_LINES = [
   '- <color="ffff00">/Inventory</> <i>or</> <color="ffff00">/Inv</> - View your inventory.',
   '- <color="ffff00">/Stats</> - View your stats.',
   '- <color="ffff00">/Hub</> - Teleport back to spawn.',
+  '- <color="ffff00">/ResetMiningData</> - Reset your progress.',
   '- <color="ffff00">/MiningHelp</> - Display this help again.',
-  '<size="15"><color="ffff00"><i>(Use <u>Page Up</> to see everything)</></></>',
+  '<size="15"><color="ffff00"><i>(Use <u>Page Up</> and <u>Page Down</> to see everything)</></></>',
 ];
 
 /**

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { OL, PS, PC, Vector, OmeggaPlayer, WriteSaveObject } from 'omegga';
 import path from 'path';
+import { formatMoney } from 'src/formatting';
 import {
   displayHelp,
   IMine,
@@ -146,6 +147,30 @@ export default class Plugin implements UMPlugin {
     );
   }
 
+  async onCmdResetMiningData(playerName: string, confirm?: string) {
+    if (confirm && confirm.toLowerCase() === 'confirm') {
+      const player = this.omegga.getPlayer(playerName);
+      const playerData = await PlayerDataManager.getPlayerData(this, player.id);
+      playerData.reset();
+      await PlayerDataManager.savePlayerData(this, player.id);
+      Omegga.whisper(
+        playerName,
+        '<color="ff00ff">CONFIRMED</>: Your mining progress has been reset.'
+      );
+      Omegga.middlePrint(playerName, '<size="40"><b>DATA RESET</></>');
+    } else {
+      Omegga.whisper(
+        playerName,
+        '<color="ff0000">WARNING</>: This command will clear all your mining progress.' +
+          `Your mining level will be set to <b>1</>, your money set to ${formatMoney(
+            0
+          )}, and your inventory cleared.`,
+        '-',
+        'Type <color="ffff00">/ResetMiningData confirm</> to confirm your reset.'
+      );
+    }
+  }
+
   async init() {
     // Make minigame config visible to Omegga as a preset.
     if (fs.existsSync(this.minigamePresetPath)) {
@@ -165,7 +190,8 @@ export default class Plugin implements UMPlugin {
       .on('cmd:inventory', this.onCmdInventory.bind(this))
       .on('cmd:inv', this.onCmdInventory.bind(this))
       .on('cmd:stats', this.onCmdStats.bind(this))
-      .on('cmd:hub', this.onCmdHub.bind(this));
+      .on('cmd:hub', this.onCmdHub.bind(this))
+      .on('cmd:resetminingdata', this.onCmdResetMiningData.bind(this));
 
     this.stationManager.init();
 
@@ -177,6 +203,7 @@ export default class Plugin implements UMPlugin {
         'inv',
         'stats',
         'hub',
+        'resetminingdata',
       ],
     };
   }

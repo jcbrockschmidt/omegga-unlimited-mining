@@ -32,6 +32,7 @@ export interface IPlayerData {
   getPickUpgradeCost(): number;
   upgradePick(): number;
   getPickaxePower(): number;
+  reset(): void;
 }
 
 interface IPlayerDataAdapter extends IPlayerData {
@@ -210,6 +211,12 @@ class PlayerDataAdapter implements IPlayerDataAdapter {
 
   getPickaxePower(): number {
     return this.pickaxe.getPower();
+  }
+
+  reset(): void {
+    this.money = 0;
+    this.pickaxe.reset();
+    this.resources.clear();
   }
 }
 

@@ -3,6 +3,7 @@ export interface IPickaxe {
   getPower(): number;
   upgrade(): number;
   getUpgradeCost(): number;
+  reset(): void;
 }
 
 export class Pickaxe implements IPickaxe {
@@ -27,5 +28,9 @@ export class Pickaxe implements IPickaxe {
 
   getUpgradeCost(): number {
     return (this.level + 1) * 500;
+  }
+
+  reset(): void {
+    this.level = 1;
   }
 }

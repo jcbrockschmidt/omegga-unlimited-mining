@@ -39,6 +39,18 @@
       "description": "Teleports the user to the spawn area.",
       "example": "/Hub",
       "args": []
+    },
+    {
+      "name": "/ResetMiningData",
+      "description": "Resets the caller's level, money, inventory, etc.",
+      "example": "/ResetMiningData",
+      "args": [
+        {
+          "name": "confirm",
+          "description": "Confirms the caller's decision to reset.",
+          "required": false
+        }
+      ]
     }
   ]
 }
