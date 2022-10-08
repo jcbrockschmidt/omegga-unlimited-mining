@@ -3,8 +3,8 @@ import { OmeggaPlayer } from 'omegga';
 const HELP_LINES = [
   '<size="20"><b><u>Help for Unlimited Mining:</></></>',
   '- <b>Start mining</></> by clicking bricks in the mining area.',
-  '- <b>Sell you resources</></> by clicking the minecart.',
-  '- <b>Upgrade your pick</></> by clicking the workbench.',
+  '- <b>Sell resources</></> by clicking the minecart.',
+  '- <b>Upgrade your pickaxe</></> by clicking the workbench.',
   '- <color="ffff00">/Inventory</> <i>or</> <color="ffff00">/Inv</> - View your inventory.',
   '- <color="ffff00">/Stats</> - View your stats.',
   '- <color="ffff00">/Hub</> - Teleport back to spawn.',

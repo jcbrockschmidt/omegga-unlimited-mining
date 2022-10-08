@@ -30,24 +30,24 @@
     },
     {
       "name": "/Stats",
-      "description": "Displays your stats, such as money and pick level.",
+      "description": "Displays your stats, such as pickaxe level and money",
       "example": "/Stats",
       "args": []
     },
     {
       "name": "/Hub",
-      "description": "Teleports the user to the spawn area.",
+      "description": "Teleports you to spawn.",
       "example": "/Hub",
       "args": []
     },
     {
       "name": "/ResetMiningData",
-      "description": "Resets the caller's level, money, inventory, etc.",
+      "description": "Resets the your pickaxe level, money, inventory, etc.",
       "example": "/ResetMiningData",
       "args": [
         {
           "name": "confirm",
-          "description": "Confirms the caller's decision to reset.",
+          "description": "Confirms the decision to reset.",
           "required": false
         }
       ]

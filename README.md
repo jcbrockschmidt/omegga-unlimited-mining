@@ -1,29 +1,24 @@
-<!--
-
-When uploading your plugin to github/gitlab
-start your repo name with "omegga-"
-
-example: https://github.com/SadBlobfish/omegga-unlimited-mining
-
-Your plugin will be installed via omegga install gh:SadBlobfish/unlimited-mining
-
--->
-
 # Unlimited Mining
 
-A typed safe plugin for [omegga](https://github.com/brickadia-community/omegga).
-
-This is an auto-generated README file. Please change it before publishing your plugin!
-
-Be sure to edit the script in `setup.sh` to configure your plugin on install, or
-remove it entirely if it is unnecessary.
+A Brickadia gamemode for [omegga](https://github.com/brickadia-community/omegga) where players mine infinitely.
 
 ## Install
 
 `omegga install gh:jcbrockschmidt/unlimited-mining`
 
-_TODO: more steps...?_
+## How to play
 
-## Usage
+Start mining by clicking bricks in the mining area. Sell resources by clicking the minecart in the hub. Upgrade your pickaxe by clicking the workbench in the hub. Keep digging downwards to find tougher layers with more valuable resources.
 
-_TODO: include some usage information_
+## Commands
+
+### All users
+
+* `/MiningHelp` - Displays help for this gamemode.
+* `/Inventory` or `/Inv` - Displays the player's inventory.
+* `/Stats` - Displays the player's stats, such as pickaxe level and money.
+* `/Hub` - Teleports the player to spawn.
+
+### Admin
+
+* `/ResetMine` - Resets the mine.
